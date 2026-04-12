@@ -1,0 +1,10 @@
+{
+    "name": "Example Theme",
+    "slug": "example-theme",
+    "description": "Tema de exemplo apenas para validar o manifesto e o discovery inicial.",
+    "version": "0.1.0",
+    "author": "Core Team",
+    "core": {
+        "min": "0.1.0"
+    }
+}

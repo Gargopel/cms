@@ -1,0 +1,41 @@
+{
+    "name": "Pages",
+    "slug": "pages",
+    "description": "Plugin oficial enxuto para gerenciar paginas publicas simples no ecossistema do core.",
+    "version": "0.1.0",
+    "author": "Core Team",
+    "provider": "Plugins\\Pages\\Providers\\PagesServiceProvider",
+    "capabilities": [
+        "admin_pages"
+    ],
+    "permissions": [
+        {
+            "slug": "view_pages",
+            "name": "View Pages",
+            "description": "Permite listar e consultar paginas no admin do plugin."
+        },
+        {
+            "slug": "create_pages",
+            "name": "Create Pages",
+            "description": "Permite criar novas paginas no plugin Pages."
+        },
+        {
+            "slug": "edit_pages",
+            "name": "Edit Pages",
+            "description": "Permite editar paginas existentes no plugin Pages."
+        },
+        {
+            "slug": "publish_pages",
+            "name": "Publish Pages",
+            "description": "Permite alterar o status publico das paginas para publicadas."
+        },
+        {
+            "slug": "delete_pages",
+            "name": "Delete Pages",
+            "description": "Permite remover paginas do plugin Pages."
+        }
+    ],
+    "core": {
+        "min": "0.1.0"
+    }
+}

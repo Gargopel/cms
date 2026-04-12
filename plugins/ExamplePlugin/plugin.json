@@ -1,0 +1,23 @@
+{
+    "name": "Example Plugin",
+    "slug": "example-plugin",
+    "description": "Plugin de exemplo apenas para validar o manifesto e o discovery inicial.",
+    "version": "0.1.0",
+    "author": "Core Team",
+    "provider": "Plugins\\ExamplePlugin\\Providers\\ExamplePluginServiceProvider",
+    "permissions": [
+        {
+            "slug": "view_example_dashboard",
+            "name": "View Example Dashboard",
+            "description": "Permite visualizar a area administrativa tecnica do plugin de exemplo."
+        },
+        {
+            "slug": "manage_example_plugin",
+            "name": "Manage Example Plugin",
+            "description": "Permite operar configuracoes tecnicas do plugin de exemplo."
+        }
+    ],
+    "core": {
+        "min": "0.1.0"
+    }
+}

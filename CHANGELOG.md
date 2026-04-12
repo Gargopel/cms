@@ -1,0 +1,142 @@
+# Changelog
+
+Todas as mudancas relevantes deste projeto devem ser registradas aqui.
+
+O formato segue uma convencao inspirada em Keep a Changelog, com foco em clareza para evolucao do core, plugins e temas.
+
+## [Unreleased]
+
+### Added
+- base do projeto em Laravel 11
+- estrutura inicial para `app/Core`, `app/Support`, `plugins`, `themes` e `docs`
+- `CoreServiceProvider` minimo para consolidar a fundacao do core
+- utilitario `PlatformPaths` para centralizar caminhos reservados da plataforma
+- documentacao inicial obrigatoria do produto e da arquitetura
+- contratos minimos para manifestos de plugin e tema
+- discovery leve de extensoes por manifesto
+- validacao de estrutura minima e compatibilidade de core para plugins e temas
+- classes de retorno para descoberta, prontas para uso futuro por admin e installer
+- exemplos minimos de plugin e tema para validar a convencao de manifesto
+- registro persistido das extensoes sincronizadas
+- migration e modelagem de `extension_records`
+- servico de sincronizacao entre discovery e banco
+- servico de enable e disable sem boot de providers
+- primeira camada de boot condicional de plugins habilitados e validos
+- validacao de provider por existencia de classe e compatibilidade com `ServiceProvider`
+- relatorio simples de bootstrap para observabilidade futura
+- rotas administrativas iniciais do core
+- middleware de acesso administrativo basico para o admin do core
+- dashboard operacional minimo com metricas do registro de extensoes
+- pagina administrativa inicial de extensoes registradas
+- pagina administrativa inicial de manutencao com limpeza segura de cache
+- componentes visuais reutilizaveis do admin alinhados ao design system do produto
+- persistencia em cache do ultimo relatorio de bootstrap de plugins para observabilidade administrativa
+- modelagem inicial de papeis e permissoes do core
+- autenticacao administrativa por sessao com login e logout
+- middleware e gates para autorizacao real do painel administrativo
+- permissao central `access_admin` e permissoes iniciais para dashboard, extensoes e manutencao
+- seeder seguro para admin local/testing do core
+- instalador web guiado em Blade com etapas de welcome, requirements, database, administrator e complete
+- guardas para permitir instalacao apenas antes do setup e bloquear reinstalacao depois
+- servicos de checagem de requisitos, escrita de `.env`, conexao de banco e execucao do setup base
+- criacao do administrador inicial dentro do fluxo do instalador
+- estado explicito de instalacao concluida por marcador persistido
+- telas administrativas iniciais para usuarios, cargos e permissoes do core
+- regras de governanca para impedir autoescalonamento indevido e remocao do ultimo super administrador
+- testes automatizados para discovery, sync, estados operacionais, boot condicional e bloqueios de seguranca
+- testes automatizados das rotas administrativas principais e do acesso basico ao admin
+- testes automatizados de autenticacao e autorizacao administrativa
+- testes automatizados do fluxo do instalador web
+- testes automatizados da governanca administrativa de usuarios, cargos e permissoes
+- persistencia propria para settings globais do core
+- servico central de leitura e escrita de settings com suporte inicial a string, boolean e text
+- pagina administrativa inicial para configuracao global do grupo `general`
+- permissoes `view_settings` e `manage_settings` para governanca de configuracoes do core
+- testes automatizados da leitura, persistencia e atualizacao administrativa de settings
+- persistencia propria para logs de auditoria administrativa
+- servico central de registro de eventos auditaveis do core
+- pagina administrativa inicial para consulta de auditoria com filtros simples
+- permissao `view_audit_logs` para governanca de consulta dos registros
+- testes automatizados da trilha auditavel de login, logout, usuarios, cargos, settings e manutencao
+- camada inicial de health checks do core com contratos simples e resultados estruturados
+- servico agregador para executar diagnostico basico de sistema
+- pagina administrativa inicial para consulta de system health
+- permissao `view_system_health` para governanca de acesso ao diagnostico do sistema
+- testes automatizados da execucao e do acesso administrativo aos health checks
+- permissao `manage_extensions` para operacao administrativa real das extensoes
+- sincronizacao manual de extensoes pelo admin do core
+- acoes administrativas de enable e disable para extensoes elegiveis
+- auditoria administrativa das operacoes de sync, enable e disable
+- testes automatizados das acoes operacionais de extensoes no admin
+- camada central de pre-validacao operacional para enable e disable de extensoes
+- bloqueios para acoes redundantes, registros inelegiveis e extensoes criticas
+- estrutura preparada para warnings e futuros bloqueios por dependencia
+- auditoria administrativa de tentativas bloqueadas em acoes de extensoes
+- manifesto normalizado persistido para extensoes, com warnings de normalizacao e metadados operacionais explicitos
+- testes automatizados da normalizacao e da persistencia de snapshot normalizado no registry
+- camada inicial de dependencias diretas entre extensoes com bloqueios reais de enable e disable
+- servico central para inspecionar dependencias declaradas e dependentes reversos
+- testes automatizados de dependencias operacionais no dominio e no admin
+- camada inicial de health especifico de extensoes com relatorio agregado por extensao
+- novo check `extensions_ecosystem` no system health do core
+- resumo visual de saude de extensoes na area administrativa de extensoes
+- camada inicial de capabilities operacionais normalizadas com catalogo reconhecido pelo core
+- servico de consulta para capabilities declaradas, custom e busca por extensoes que declaram uma capability
+- capacidades agora expostas no admin de extensoes e aproveitadas pelo health de extensoes
+- primeira camada de lifecycle administrativo de extensoes com `lifecycle_status`
+- acoes administrativas de install e remove logicos no registry, sem mutacao do filesystem
+- testes automatizados cobrindo lifecycle administrativo, bloqueios de remove e preservacao de extensoes removidas durante sync
+- base real do theme manager do core com tema ativo persistido
+- pagina administrativa minima para listar temas e selecionar o tema ativo
+- resolvedor de views do tema ativo com fallback seguro para views do core
+- novas permissoes `view_themes` e `manage_themes`
+- testes automatizados para selecao de tema, bloqueio de tema invalido e renderizacao com fallback
+- contrato publico para declaracao de permissoes por plugins no manifesto normalizado
+- sincronizacao de permissoes de plugins validos e instalados no catalogo central de auth do core
+- escopo explicito `plugin:<slug>` para diferenciar permissoes do core e de plugins
+- testes automatizados da sincronizacao e remocao de permissoes de plugins
+- primeira camada real de pontos de extensao publicos para menu admin e dashboard
+- registro central em memoria para contribuicoes administrativas de plugins habilitados
+- testes automatizados do registro e consumo administrativo dessas contribuicoes
+- primeiro plugin oficial real do ecossistema em `plugins/Pages`
+- plugin Pages com manifesto completo, permissoes proprias, hooks administrativos, rotas proprias, persistencia minima e renderizacao publica com fallback por tema
+- testes automatizados do plugin oficial Pages cobrindo admin, RBAC, publicacao publica e override por tema
+- camada operacional inicial de migrations por plugin, com descoberta de arquivos, deteccao de pendencias e execucao segura via admin
+- testes automatizados das operacoes administrativas e do servico central de migrations por plugin
+
+### Changed
+- `README.md` reescrito para refletir a proposta plugin-first
+- `composer.json` ajustado para descrever a plataforma em vez do skeleton padrao do Laravel
+- documentacao de extensoes atualizada para refletir o contrato executavel inicial
+- ambiente de testes configurado para SQLite em memoria
+- plugin de exemplo passou a declarar provider tecnico minimo
+- documentacao do admin atualizada para refletir o primeiro painel operacional do core
+- protecao provisoria do admin foi substituida por autenticacao e permissao reais
+- rotas administrativas existentes agora exigem usuario autenticado e permissions especificas
+- rotas administrativas agora exigem que a instalacao tenha sido concluida
+- documentacao de instalacao passou a refletir o wizard real do produto
+- documentacao do admin passou a refletir a governanca inicial de acesso do core
+- o runtime do core agora pode aplicar `site_name`, `locale`, `timezone` e `system_email` a partir dos settings persistidos
+- documentacao do admin e da estrutura do core passou a refletir a nova base de settings globais
+- o admin do core agora registra acoes sensiveis em trilha auditavel minima para consulta operacional
+- dashboard e admin do core agora conseguem expor resumo e detalhe do diagnostico basico de saude do sistema
+- a area de extensoes do admin agora evoluiu de leitura para operacao controlada sobre o registro persistido
+- a operacao de extensoes agora passa por uma camada central de elegibilidade antes de alterar estado operacional
+- o ecossistema de extensoes agora usa `normalized_manifest` como contrato principal sempre que possivel, mantendo `raw_manifest` como snapshot bruto e fallback incremental
+- `requires` deixou de ser apenas metadado informativo e passou a bloquear operacoes inconsistentes de extensoes em nivel direto
+- o system health do core agora diferencia saude basica do registry e saude operacional do ecossistema de extensoes
+- `capabilities` deixou de ser apenas metadado preparatorio e passou a ter leitura normalizada, warnings e observabilidade consistente
+- a area de extensoes do admin agora diferencia discovery, lifecycle administrativo e estado operacional
+- o sync do registry agora preserva extensoes marcadas como `removed` em vez de reinstala-las automaticamente
+- o frontend padrao agora resolve a view inicial a partir do tema ativo quando disponivel
+- a area administrativa de permissoes agora exibe origem explicita de permissoes do core e de plugins
+- o dashboard e o sidebar do admin agora podem consumir superficies publicadas por plugins elegiveis
+- o bootstrap condicional agora sincroniza router e `UrlGenerator` ao registrar providers de plugins, mantendo rotas nomeadas e redirects consistentes para plugins oficiais
+- a area de extensoes do admin agora exibe status de migrations de plugin e permite executar pendencias sem depender de CLI
+
+### Notes
+- ainda nao ha plugin manager completo, theme manager completo ou mecanismo completo de upgrade
+- o admin atual e inicial e operacional, nao um painel monolitico completo
+- ainda nao ha gestao avancada de usuarios, equipes, organizacoes ou multitenancy
+- ainda nao ha mecanismo de upgrade entre versoes
+- nenhum modulo de negocio foi introduzido nestas etapas
