@@ -28,6 +28,28 @@
             </div>
 
             <div class="field">
+                <label for="featured_image_id">Featured Image</label>
+                <select id="featured_image_id" name="featured_image_id">
+                    <option value="">No featured image</option>
+                    @foreach ($featuredImageOptions as $asset)
+                        <option value="{{ $asset->getKey() }}" @selected((string) old('featured_image_id', $pageRecord->featured_image_id) === (string) $asset->getKey())>
+                            {{ $asset->original_name }} ({{ $asset->humanSize() }})
+                        </option>
+                    @endforeach
+                </select>
+                <span class="stat-note">Selecione uma imagem ja existente na biblioteca de midia do core.</span>
+                @error('featured_image_id')
+                    <span class="stat-note" style="color: var(--danger);">{{ $message }}</span>
+                @enderror
+            </div>
+
+            @if ($pageRecord->featuredImage?->url())
+                <div class="notice">
+                    Featured image atual: <a href="{{ $pageRecord->featuredImage->url() }}" target="_blank" rel="noopener">{{ $pageRecord->featuredImage->original_name }}</a>
+                </div>
+            @endif
+
+            <div class="field">
                 <label for="status">Status</label>
                 @php
                     $canPublish = auth()->user()?->can(\Plugins\Pages\Enums\PagesPermission::PublishPages->value) ?? false;

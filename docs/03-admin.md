@@ -18,6 +18,7 @@ Existe agora uma base administrativa funcional do core em Blade, mas ainda nao e
 - pagina inicial de manutencao
 - paginas administrativas iniciais de usuarios, cargos e permissoes
 - pagina administrativa inicial de settings globais do core
+- pagina administrativa inicial de media manager do core
 - pagina administrativa inicial de logs de auditoria do core
 - pagina administrativa inicial de health checks e diagnostico do sistema
 - consumo do registro persistido de extensoes e do ultimo relatorio de bootstrap
@@ -46,6 +47,9 @@ Existe agora uma base administrativa funcional do core em Blade, mas ainda nao e
 - `GET /admin/roles/{role}/edit`
 - `GET /admin/permissions`
 - `GET /admin/settings`
+- `GET /admin/extensions/{extension}/settings`
+- `GET /admin/media`
+- `POST /admin/media`
 - `GET /admin/audit`
 - `GET /admin/health`
 - `GET /admin/pages`
@@ -80,6 +84,9 @@ Permissoes iniciais do core:
 - `manage_permissions`
 - `view_settings`
 - `manage_settings`
+- `view_media`
+- `upload_media`
+- `manage_media`
 - `view_audit_logs`
 - `view_system_health`
 
@@ -147,7 +154,10 @@ Esse comportamento e controlado por configuracao e nao deve ser tratado como flu
 - leitura dos settings globais do grupo `general`
 - edicao dos settings globais por usuarios com permissao apropriada
 - persistencia centralizada de nome do site, tagline, email base, timezone, locale, footer e scripts globais opcionais
-- base pronta para expansao futura de settings por plugin e tema sem misturar tudo no core agora
+- pagina administrativa minima para settings de plugin elegivel em `/admin/extensions/{extension}/settings`
+- catalogo explicito por plugin, sem form builder generico
+- persistencia separada por grupo `plugin:<slug>`
+- base pronta para expansao futura de settings de plugins sem misturar isso com settings de tema
 
 ### Themes
 
@@ -176,6 +186,9 @@ Esse comportamento e controlado por configuracao e nao deve ser tratado como flu
 - quem nao possui `manage_roles` nao consegue alterar cargos via UI nem por submissao direta
 - quem nao possui `manage_permissions` nao consegue atribuir permissoes a cargos
 - quem nao possui `manage_settings` nao consegue alterar configuracoes globais do core
+- quem nao possui `view_media` nao consegue consultar a biblioteca de mídia
+- quem nao possui `upload_media` nao consegue enviar arquivos ao media manager
+- quem nao possui a permissao declarada pelo plugin nao consegue acessar nem alterar os settings desse plugin
 - quem nao possui `view_audit_logs` nao consegue consultar a trilha administrativa do sistema
 - quem nao possui `view_system_health` nao consegue consultar a area de diagnostico do sistema
 - quem nao possui `manage_extensions` nao consegue sincronizar nem alterar o estado operacional das extensoes
@@ -213,6 +226,7 @@ Esse comportamento e controlado por configuracao e nao deve ser tratado como flu
 - indicador por extensao com severidade `ok`, `warning` ou `error`
 - capabilities reconhecidas e custom visiveis por extensao
 - permissoes declaradas por plugins sincronizadas de forma central no auth do core quando a extensao esta `valid` e `installed`
+- acesso direto aos settings de plugins elegiveis quando o usuario possui a permissao declarada pelo plugin
 
 - nome
 - slug
@@ -255,6 +269,7 @@ Regra importante desta fase:
 - `install` e administrativo, nao fisico
 - `remove` e administrativo, nao apaga arquivos
 - `run migrations` opera apenas sobre o banco e nunca altera o filesystem do plugin
+- settings de plugin so ficam acessiveis para plugins `valid` e `installed`
 - o sync manual continua atualizando o registro a partir do disco, mas preserva extensoes marcadas como `removed`
 
 Essa protecao ainda e propositalmente simples:
@@ -323,6 +338,21 @@ Nesta etapa:
 - armazenamento separado do core para nao misturar runtime, `.env` e preferencia operacional
 - campo de scripts globais apenas armazenado nesta fase, sem injecao automatica pelo core
 
+### Media
+
+- listagem server-rendered da biblioteca de mídia do core
+- upload seguro com allowlist de extensões e mime types
+- persistência de nome original, caminho armazenado, mime type, tamanho, extensão e usuário que enviou
+- base reutilizável para plugins futuros sem acoplamento profundo nesta fase
+- auditoria administrativa para uploads bem-sucedidos
+
+### Plugin Settings
+
+- pagina core-managed para editar settings de plugins elegiveis
+- uso de permissao declarada pelo plugin, com fallback operacional para `manage_extensions` apenas quando o manifesto nao declarar uma permissao valida
+- leitura com defaults do catalogo do plugin e persistencia em `plugin:<slug>`
+- auditoria administrativa de alteracoes por plugin
+
 ### Audit
 
 - login e logout administrativo
@@ -346,6 +376,7 @@ Exemplo real nesta etapa:
 - `pages.edit_pages`
 - `pages.publish_pages`
 - `pages.delete_pages`
+- `blog.manage_settings`
 
 ### System Health
 

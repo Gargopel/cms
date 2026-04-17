@@ -3,7 +3,11 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $page->title }} - {{ config('app.name') }}</title>
+    @if (isset($seo) && $seo && \Illuminate\Support\Facades\View::exists('seo::partials.meta'))
+        @include('seo::partials.meta', ['seo' => $seo])
+    @else
+        <title>{{ $page->title }} - {{ config('app.name') }}</title>
+    @endif
     <style>
         :root {
             --bg: #07111f;
@@ -69,6 +73,14 @@
             line-height: 1.9;
             font-size: 1.04rem;
         }
+
+        .featured-image {
+            width: 100%;
+            border-radius: 24px;
+            margin: 0 0 24px;
+            display: block;
+            border: 1px solid var(--panel-border);
+        }
     </style>
 </head>
 <body>
@@ -77,6 +89,9 @@
             <div class="eyebrow">Pages Plugin</div>
             <h1>{{ $page->title }}</h1>
             <div class="meta">Slug: {{ $page->slug }} | Site: {{ config('app.name') }}</div>
+            @if ($page->featuredImage?->url())
+                <img class="featured-image" src="{{ $page->featuredImage->url() }}" alt="{{ $page->title }}">
+            @endif
             <div class="content">{!! nl2br(e($page->content)) !!}</div>
         </article>
     </main>

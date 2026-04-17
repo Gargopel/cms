@@ -38,6 +38,8 @@ interface ExtensionManifest
 
     public function permissions(): array;
 
+    public function settings(): array;
+
     public function extra(): array;
 
     public function toArray(): array;

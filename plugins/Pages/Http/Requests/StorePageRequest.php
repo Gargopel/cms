@@ -2,6 +2,7 @@
 
 namespace Plugins\Pages\Http\Requests;
 
+use App\Core\Media\Rules\ValidFeaturedImage;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -49,6 +50,7 @@ class StorePageRequest extends FormRequest
             ],
             'content' => ['required', 'string'],
             'status' => ['required', Rule::in(PageStatus::values())],
+            'featured_image_id' => ['nullable', 'integer', new ValidFeaturedImage],
         ];
     }
 }

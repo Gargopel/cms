@@ -29,6 +29,21 @@ return [
         'cache_key' => 'platform.core.settings.cache',
     ],
 
+    'media' => [
+        'disk' => env('PLATFORM_MEDIA_DISK', 'public'),
+        'directory' => env('PLATFORM_MEDIA_DIRECTORY', 'media'),
+        'max_upload_kilobytes' => (int) env('PLATFORM_MEDIA_MAX_UPLOAD_KB', 5120),
+        'allowed_extensions' => ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'pdf'],
+        'allowed_mime_types' => [
+            'image/jpeg',
+            'image/png',
+            'image/webp',
+            'image/gif',
+            'image/svg+xml',
+            'application/pdf',
+        ],
+    ],
+
     'install' => [
         'prefix' => env('PLATFORM_INSTALL_PREFIX', 'install'),
         'marker_path' => env('PLATFORM_INSTALL_MARKER_PATH', storage_path('app/platform/install/installed.json')),

@@ -2,6 +2,7 @@
 
 namespace Plugins\Pages\Http\Controllers\Admin;
 
+use App\Core\Media\Models\MediaAsset;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
@@ -38,6 +39,7 @@ class PageController extends Controller
             ]),
             'submitRoute' => route('plugins.pages.admin.store'),
             'submitMethod' => 'POST',
+            'featuredImageOptions' => $this->featuredImageOptions(),
         ]);
     }
 
@@ -58,6 +60,7 @@ class PageController extends Controller
             'pageRecord' => $page,
             'submitRoute' => route('plugins.pages.admin.update', $page),
             'submitMethod' => 'PUT',
+            'featuredImageOptions' => $this->featuredImageOptions(),
         ]);
     }
 
@@ -82,5 +85,14 @@ class PageController extends Controller
     protected function adminPagesPath(): string
     {
         return '/'.trim((string) config('platform.admin.prefix', 'admin'), '/').'/pages';
+    }
+
+    protected function featuredImageOptions()
+    {
+        return MediaAsset::query()
+            ->where('mime_type', 'like', 'image/%')
+            ->latest('created_at')
+            ->limit(100)
+            ->get();
     }
 }

@@ -9,6 +9,7 @@ use App\Core\Extensions\Enums\ExtensionType;
 use App\Core\Extensions\Hooks\AdminDashboardPanel;
 use App\Core\Extensions\Hooks\AdminNavigationItem;
 use App\Core\Extensions\Hooks\ExtensionHookRegistry;
+use App\Core\Extensions\Hooks\ThemeSlotBlock;
 use App\Core\Extensions\Models\ExtensionRecord;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -49,9 +50,16 @@ class ExtensionHookRegistryTest extends TestCase
             title: 'Reporting Snapshot',
             description: 'Plugin dashboard panel.',
         ));
+        $registry->registerThemeSlotBlock(new ThemeSlotBlock(
+            pluginSlug: 'reporting-suite',
+            key: 'home-cta',
+            slot: 'footer_cta',
+            view: 'front.home',
+        ));
 
         $this->assertCount(1, $registry->adminNavigationItems());
         $this->assertCount(1, $registry->adminDashboardPanels());
+        $this->assertCount(1, $registry->themeSlotBlocks('footer_cta'));
     }
 
     public function test_it_rejects_contributions_from_plugins_outside_operational_hook_window(): void
@@ -133,9 +141,17 @@ class ExtensionHookRegistryTest extends TestCase
                 title: 'Snapshot',
                 description: 'Plugin dashboard panel.',
             ));
+
+            $registry->registerThemeSlotBlock(new ThemeSlotBlock(
+                pluginSlug: $pluginSlug,
+                key: 'home-cta',
+                slot: 'footer_cta',
+                view: 'front.home',
+            ));
         }
 
         $this->assertCount(0, $registry->adminNavigationItems());
         $this->assertCount(0, $registry->adminDashboardPanels());
+        $this->assertCount(0, $registry->themeSlotBlocks('footer_cta'));
     }
 }

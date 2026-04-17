@@ -23,6 +23,7 @@ class PluginManifest extends AbstractExtensionManifest
         array $requires = [],
         array $capabilities = [],
         array $permissions = [],
+        array $settings = [],
         array $extra = [],
     ) {
         parent::__construct(
@@ -41,6 +42,7 @@ class PluginManifest extends AbstractExtensionManifest
             requires: $requires,
             capabilities: $capabilities,
             permissions: $permissions,
+            settings: $settings,
             extra: $extra,
         );
     }
@@ -63,7 +65,8 @@ class PluginManifest extends AbstractExtensionManifest
             requires: $data['requires'] ?? [],
             capabilities: $data['capabilities'] ?? [],
             permissions: $data['permissions'] ?? [],
-            extra: Arr::except($data, ['name', 'slug', 'description', 'version', 'author', 'vendor', 'core', 'provider', 'critical', 'requires', 'capabilities', 'permissions']),
+            settings: $data['settings'] ?? [],
+            extra: Arr::except($data, ['name', 'slug', 'description', 'version', 'author', 'vendor', 'core', 'provider', 'critical', 'requires', 'capabilities', 'permissions', 'settings']),
         );
     }
 

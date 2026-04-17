@@ -4,6 +4,7 @@ namespace App\Core\Foundation;
 
 use App\Core\Contracts\Extensions\Admin\AdminDashboardPanelRegistry;
 use App\Core\Contracts\Extensions\Admin\AdminNavigationRegistry;
+use App\Core\Contracts\Extensions\Themes\ThemeSlotRegistry;
 use App\Core\Extensions\Boot\BootablePluginResolver;
 use App\Core\Extensions\Boot\PluginBootstrapReportStore;
 use App\Core\Extensions\Boot\PluginProviderBootstrapper;
@@ -29,15 +30,18 @@ use App\Core\Extensions\Registry\ExtensionLifecycleStateManager;
 use App\Core\Extensions\Discovery\ExtensionDiscoveryService;
 use App\Core\Extensions\Registry\ExtensionOperationalStateManager;
 use App\Core\Extensions\Registry\ExtensionRegistrySynchronizer;
+use App\Core\Extensions\Settings\PluginSettingsManager;
 use App\Core\Install\Environment\EnvironmentFileManager;
 use App\Core\Install\InstallationState;
 use App\Core\Install\Setup\InstallApplication;
 use App\Core\Install\Support\InstallDatabaseConfigFactory;
 use App\Core\Install\Support\InstallDatabaseManager;
 use App\Core\Install\Support\InstallRequirementChecker;
+use App\Core\Media\MediaManager;
 use App\Core\Settings\CoreSettingsCatalog;
 use App\Core\Settings\CoreSettingsManager;
 use App\Core\Themes\ThemeManager;
+use App\Core\Themes\ThemeSlotRenderer;
 use App\Core\Themes\ThemeViewResolver;
 use App\Support\PlatformPaths;
 use Illuminate\Support\ServiceProvider;
@@ -62,8 +66,10 @@ class CoreServiceProvider extends ServiceProvider
         $this->app->singleton(ExtensionHookRegistry::class);
         $this->app->singleton(AdminNavigationRegistry::class, fn ($app): ExtensionHookRegistry => $app->make(ExtensionHookRegistry::class));
         $this->app->singleton(AdminDashboardPanelRegistry::class, fn ($app): ExtensionHookRegistry => $app->make(ExtensionHookRegistry::class));
+        $this->app->singleton(ThemeSlotRegistry::class, fn ($app): ExtensionHookRegistry => $app->make(ExtensionHookRegistry::class));
         $this->app->singleton(ExtensionOperationEligibilityService::class);
         $this->app->singleton(PluginPermissionRegistrySynchronizer::class);
+        $this->app->singleton(PluginSettingsManager::class);
         $this->app->singleton(BootablePluginResolver::class);
         $this->app->singleton(PluginBootstrapReportStore::class);
         $this->app->singleton(PluginProviderBootstrapper::class);
@@ -87,10 +93,12 @@ class CoreServiceProvider extends ServiceProvider
         $this->app->singleton(InstallDatabaseConfigFactory::class);
         $this->app->singleton(InstallDatabaseManager::class);
         $this->app->singleton(InstallApplication::class);
+        $this->app->singleton(MediaManager::class);
         $this->app->singleton(CoreSettingsCatalog::class);
         $this->app->singleton(CoreSettingsManager::class);
         $this->app->singleton(ThemeManager::class);
         $this->app->singleton(ThemeViewResolver::class);
+        $this->app->singleton(ThemeSlotRenderer::class);
     }
 
     public function boot(

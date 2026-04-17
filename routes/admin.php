@@ -4,7 +4,9 @@ use App\Core\Admin\Http\Controllers\AdminDashboardController;
 use App\Core\Admin\Http\Controllers\AdminAuditLogsController;
 use App\Core\Admin\Http\Controllers\AdminExtensionsController;
 use App\Core\Admin\Http\Controllers\AdminMaintenanceController;
+use App\Core\Admin\Http\Controllers\AdminMediaController;
 use App\Core\Admin\Http\Controllers\AdminPermissionsController;
+use App\Core\Admin\Http\Controllers\AdminPluginSettingsController;
 use App\Core\Admin\Http\Controllers\AdminRolesController;
 use App\Core\Admin\Http\Controllers\AdminSettingsController;
 use App\Core\Admin\Http\Controllers\AdminSystemHealthController;
@@ -53,6 +55,14 @@ Route::post('/extensions/{extension}/migrations/run', [AdminExtensionsController
     ->middleware('can:'.CorePermission::ManageExtensions->value)
     ->name('extensions.migrations.run');
 
+Route::get('/extensions/{extension}/settings', [AdminPluginSettingsController::class, 'edit'])
+    ->middleware('can:'.CorePermission::ViewExtensions->value)
+    ->name('extensions.settings.edit');
+
+Route::put('/extensions/{extension}/settings', [AdminPluginSettingsController::class, 'update'])
+    ->middleware('can:'.CorePermission::ViewExtensions->value)
+    ->name('extensions.settings.update');
+
 Route::get('/audit', AdminAuditLogsController::class)
     ->middleware('can:'.CorePermission::ViewAuditLogs->value)
     ->name('audit.index');
@@ -72,6 +82,14 @@ Route::post('/maintenance/cache/application-clear', [AdminMaintenanceController:
 Route::post('/maintenance/cache/views-clear', [AdminMaintenanceController::class, 'clearCompiledViews'])
     ->middleware('can:'.CorePermission::RunMaintenanceActions->value)
     ->name('maintenance.cache.views-clear');
+
+Route::get('/media', [AdminMediaController::class, 'index'])
+    ->middleware('can:'.CorePermission::ViewMedia->value)
+    ->name('media.index');
+
+Route::post('/media', [AdminMediaController::class, 'store'])
+    ->middleware('can:'.CorePermission::UploadMedia->value)
+    ->name('media.store');
 
 Route::prefix('/users')
     ->middleware('can:'.CorePermission::ManageUsers->value)

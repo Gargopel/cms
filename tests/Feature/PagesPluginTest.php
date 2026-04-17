@@ -14,11 +14,13 @@ use App\Core\Extensions\Registry\ExtensionLifecycleStateManager;
 use App\Core\Extensions\Registry\ExtensionOperationalStateManager;
 use App\Core\Extensions\Registry\ExtensionRegistrySynchronizer;
 use App\Core\Install\InstallationState;
+use App\Core\Media\Models\MediaAsset;
 use App\Core\Settings\CoreSettingsManager;
 use App\Core\Settings\Enums\CoreSettingType;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use Plugins\Pages\Models\Page;
 use Tests\TestCase;
 
@@ -46,6 +48,7 @@ class PagesPluginTest extends TestCase
             'core_version' => config('platform.core.version'),
         ]);
 
+        Storage::fake('public');
         $this->seed(\Database\Seeders\CoreAdminSecuritySeeder::class);
         $this->bootPagesPlugin();
     }
@@ -128,6 +131,69 @@ class PagesPluginTest extends TestCase
         $deleteResponse->assertRedirect($this->adminPagesIndexPath());
         $this->assertDatabaseMissing('plugin_pages_pages', [
             'slug' => 'about-platform',
+        ]);
+    }
+
+    public function test_it_persists_featured_image_reference_for_page(): void
+    {
+        $user = $this->createUserWithPermissions([
+            'access_admin',
+            'view_dashboard',
+            'pages.view_pages',
+            'pages.create_pages',
+            'pages.edit_pages',
+            'pages.publish_pages',
+        ]);
+
+        $asset = $this->createImageAsset('pages-hero.jpg');
+
+        $this->actingAs($user)->post($this->adminPagesStorePath(), [
+            'title' => 'Media Page',
+            'slug' => 'media-page',
+            'content' => 'Page with featured image',
+            'status' => 'published',
+            'featured_image_id' => $asset->getKey(),
+        ])->assertRedirect($this->adminPagesIndexPath());
+
+        $this->assertDatabaseHas('plugin_pages_pages', [
+            'slug' => 'media-page',
+            'featured_image_id' => $asset->getKey(),
+        ]);
+    }
+
+    public function test_it_blocks_invalid_featured_image_reference_for_page(): void
+    {
+        $user = $this->createUserWithPermissions([
+            'access_admin',
+            'view_dashboard',
+            'pages.view_pages',
+            'pages.create_pages',
+            'pages.edit_pages',
+            'pages.publish_pages',
+        ]);
+
+        $pdfAsset = MediaAsset::query()->create([
+            'disk' => 'public',
+            'original_name' => 'manual.pdf',
+            'stored_name' => 'manual.pdf',
+            'path' => 'media/2026/04/manual.pdf',
+            'mime_type' => 'application/pdf',
+            'size_bytes' => 2048,
+            'extension' => 'pdf',
+            'uploaded_by' => null,
+        ]);
+
+        $response = $this->actingAs($user)->post($this->adminPagesStorePath(), [
+            'title' => 'Broken Media Page',
+            'slug' => 'broken-media-page',
+            'content' => 'Should fail',
+            'status' => 'published',
+            'featured_image_id' => $pdfAsset->getKey(),
+        ]);
+
+        $response->assertSessionHasErrors('featured_image_id');
+        $this->assertDatabaseMissing('plugin_pages_pages', [
+            'slug' => 'broken-media-page',
         ]);
     }
 
@@ -244,6 +310,36 @@ BLADE
             ->assertDontSee('Pages Plugin');
     }
 
+    public function test_public_page_renders_with_and_without_featured_image(): void
+    {
+        $asset = $this->createImageAsset('page-cover.jpg');
+
+        Page::query()->create([
+            'title' => 'With Image',
+            'slug' => 'with-image',
+            'content' => 'Visible content',
+            'status' => 'published',
+            'featured_image_id' => $asset->getKey(),
+        ]);
+
+        Page::query()->create([
+            'title' => 'Without Image',
+            'slug' => 'without-image',
+            'content' => 'No image content',
+            'status' => 'published',
+        ]);
+
+        $this->get($this->publicPagePath('with-image'))
+            ->assertOk()
+            ->assertSee($asset->url(), false)
+            ->assertSee('With Image');
+
+        $this->get($this->publicPagePath('without-image'))
+            ->assertOk()
+            ->assertDontSee('img class="featured-image"', false)
+            ->assertSee('Without Image');
+    }
+
     public function test_plugin_contributes_menu_and_dashboard_surfaces_when_user_can_view_pages(): void
     {
         $user = $this->createUserWithPermissions([
@@ -312,5 +408,22 @@ BLADE
     protected function publicPagePath(string $slug): string
     {
         return '/pages/'.$slug;
+    }
+
+    protected function createImageAsset(string $name): MediaAsset
+    {
+        $path = 'media/2026/04/'.$name;
+        Storage::disk('public')->put($path, 'image-binary');
+
+        return MediaAsset::query()->create([
+            'disk' => 'public',
+            'original_name' => $name,
+            'stored_name' => $name,
+            'path' => $path,
+            'mime_type' => 'image/jpeg',
+            'size_bytes' => 1024,
+            'extension' => 'jpg',
+            'uploaded_by' => null,
+        ]);
     }
 }

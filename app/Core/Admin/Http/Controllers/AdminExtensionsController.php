@@ -13,6 +13,7 @@ use App\Core\Extensions\Operations\ExtensionOperationEligibilityService;
 use App\Core\Extensions\Registry\ExtensionLifecycleStateManager;
 use App\Core\Extensions\Registry\ExtensionOperationalStateManager;
 use App\Core\Extensions\Registry\ExtensionRegistrySynchronizer;
+use App\Core\Extensions\Settings\PluginSettingsManager;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,6 +28,7 @@ class AdminExtensionsController extends Controller
         ExtensionCapabilityService $capabilities,
         ExtensionHealthService $health,
         PluginMigrationService $pluginMigrations,
+        PluginSettingsManager $pluginSettings,
     ): View
     {
         $extensions = $overview->paginatedExtensions();
@@ -42,6 +44,7 @@ class AdminExtensionsController extends Controller
             $capabilityState = $capabilities->forExtension($extension)->toArray();
             $healthEntry = $healthReport->entryFor($extension->getKey())?->toArray();
             $migrationState = $pluginMigrations->statusFor($extension)->toArray();
+            $settingsCatalog = $pluginSettings->catalogFor($extension);
             $isEnabled = $extension->operational_status?->value === 'enabled';
             $isInstalled = $extension->isAdministrativelyInstalled();
             $isRemoved = $extension->isAdministrativelyRemoved();
@@ -53,6 +56,8 @@ class AdminExtensionsController extends Controller
             $canDisableAction = $isEnabled && ($disableState['allowed'] ?? false);
             $canRemoveAction = $removeState['allowed'] ?? false;
             $canRunMigrationsAction = $migrationState['can_run'] ?? false;
+            $canAccessSettingsAction = $settingsCatalog !== null
+                && (request()->user()?->can($settingsCatalog->resolvedPermission()) ?? false);
 
             $extensionStates[$extension->getKey()] = [
                 'install' => $installState,
@@ -69,7 +74,8 @@ class AdminExtensionsController extends Controller
                 'can_disable_action' => $canDisableAction,
                 'can_remove_action' => $canRemoveAction,
                 'can_run_migrations_action' => $canRunMigrationsAction,
-                'has_any_action' => $canInstallAction || $canEnableAction || $canDisableAction || $canRemoveAction || $canRunMigrationsAction,
+                'can_access_settings_action' => $canAccessSettingsAction,
+                'has_any_action' => $canInstallAction || $canEnableAction || $canDisableAction || $canRemoveAction || $canRunMigrationsAction || $canAccessSettingsAction,
                 'dependencies' => $dependencyState,
                 'capabilities' => [
                     ...$capabilityState,
@@ -81,6 +87,21 @@ class AdminExtensionsController extends Controller
                 ],
                 'health' => $healthEntry,
                 'migrations' => $migrationState,
+                'settings' => $settingsCatalog ? [
+                    'has_catalog' => true,
+                    'field_count' => count($settingsCatalog->fieldDefinitions()),
+                    'group' => $settingsCatalog->groupName(),
+                    'required_permission' => $settingsCatalog->resolvedPermission(),
+                    'uses_fallback_permission' => $settingsCatalog->usesFallbackPermission(),
+                    'warnings' => $settingsCatalog->warnings(),
+                ] : [
+                    'has_catalog' => false,
+                    'field_count' => 0,
+                    'group' => null,
+                    'required_permission' => null,
+                    'uses_fallback_permission' => false,
+                    'warnings' => [],
+                ],
                 'manifest' => [
                     'name' => $manifest['name'] ?? $extension->name ?? 'Unknown extension',
                     'slug' => $manifest['slug'] ?? $extension->slug ?? 'no-slug',

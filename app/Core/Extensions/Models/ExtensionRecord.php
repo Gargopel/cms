@@ -178,6 +178,7 @@ class ExtensionRecord extends Model
             'requires' => is_array($this->raw_manifest['requires'] ?? null) ? $this->raw_manifest['requires'] : [],
             'capabilities' => $this->coerceLegacyCapabilities($this->raw_manifest['capabilities'] ?? []),
             'permissions' => $this->coerceLegacyPermissions($this->raw_manifest['permissions'] ?? []),
+            'settings' => $this->coerceLegacySettings($this->raw_manifest['settings'] ?? []),
         ];
     }
 
@@ -220,6 +221,20 @@ class ExtensionRecord extends Model
         }
 
         return $definitions;
+    }
+
+    /**
+     * @return array{permission: ?string, fields: array<int, array{key: string, label: string, description: ?string, type: string, input: string, default: mixed}>}
+     */
+    public function declaredPluginSettings(): array
+    {
+        if ($this->type !== ExtensionType::Plugin || blank($this->slug)) {
+            return [];
+        }
+
+        $settings = $this->normalizedManifestSnapshot()['settings'] ?? [];
+
+        return is_array($settings) ? $settings : [];
     }
 
     /**
@@ -327,6 +342,53 @@ class ExtensionRecord extends Model
         return $permissions;
     }
 
+    /**
+     * @return array{permission: ?string, fields: array<int, array{key: string, label: string, description: ?string, type: string, input: string, default: mixed}>}
+     */
+    protected function coerceLegacySettings(mixed $value): array
+    {
+        if (! is_array($value)) {
+            return [];
+        }
+
+        $permission = $value['permission'] ?? null;
+        $fields = $value['fields'] ?? null;
+
+        if (! is_array($fields)) {
+            return [];
+        }
+
+        $normalized = [];
+
+        foreach ($fields as $field) {
+            if (! is_array($field)) {
+                continue;
+            }
+
+            $key = $field['key'] ?? null;
+            $label = $field['label'] ?? null;
+            $type = $field['type'] ?? null;
+
+            if (! is_string($key) || trim($key) === '' || ! is_string($label) || trim($label) === '' || ! is_string($type) || trim($type) === '') {
+                continue;
+            }
+
+            $normalized[] = [
+                'key' => strtolower(trim($key)),
+                'label' => trim($label),
+                'description' => is_string($field['description'] ?? null) && trim($field['description']) !== '' ? trim($field['description']) : null,
+                'type' => trim($type),
+                'input' => is_string($field['input'] ?? null) && trim($field['input']) !== '' ? trim($field['input']) : 'text',
+                'default' => $field['default'] ?? null,
+            ];
+        }
+
+        return [
+            'permission' => is_string($permission) && trim($permission) !== '' ? trim($permission) : null,
+            'fields' => $normalized,
+        ];
+    }
+
     public function toRegistryArray(): array
     {
         return [
@@ -353,6 +415,7 @@ class ExtensionRecord extends Model
                 static fn (PluginPermissionDefinition $permission): array => $permission->toArray(),
                 $this->declaredPluginPermissions(),
             ),
+            'settings' => $this->declaredPluginSettings(),
             'provider' => $this->declaredProvider(),
             'last_seen_at' => $this->last_seen_at?->toISOString(),
             'last_synced_at' => $this->last_synced_at?->toISOString(),

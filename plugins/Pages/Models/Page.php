@@ -2,8 +2,10 @@
 
 namespace Plugins\Pages\Models;
 
+use App\Core\Media\Models\MediaAsset;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Plugins\Pages\Enums\PageStatus;
 
 class Page extends Model
@@ -15,6 +17,7 @@ class Page extends Model
         'slug',
         'content',
         'status',
+        'featured_image_id',
     ];
 
     protected function casts(): array
@@ -24,6 +27,11 @@ class Page extends Model
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
+    }
+
+    public function featuredImage(): BelongsTo
+    {
+        return $this->belongsTo(MediaAsset::class, 'featured_image_id');
     }
 
     public function scopePublished(Builder $query): Builder

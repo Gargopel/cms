@@ -17,6 +17,9 @@ enum CorePermission: string
     case ManagePermissions = 'manage_permissions';
     case ViewSettings = 'view_settings';
     case ManageSettings = 'manage_settings';
+    case ViewMedia = 'view_media';
+    case UploadMedia = 'upload_media';
+    case ManageMedia = 'manage_media';
     case ViewAuditLogs = 'view_audit_logs';
     case ViewSystemHealth = 'view_system_health';
 
@@ -36,6 +39,9 @@ enum CorePermission: string
             self::ManagePermissions => 'Manage Permissions',
             self::ViewSettings => 'View Settings',
             self::ManageSettings => 'Manage Settings',
+            self::ViewMedia => 'View Media',
+            self::UploadMedia => 'Upload Media',
+            self::ManageMedia => 'Manage Media',
             self::ViewAuditLogs => 'View Audit Logs',
             self::ViewSystemHealth => 'View System Health',
         };
@@ -57,6 +63,9 @@ enum CorePermission: string
             self::ManagePermissions => 'Permite visualizar permissoes e atribui-las aos cargos.',
             self::ViewSettings => 'Permite visualizar as configuracoes globais do core.',
             self::ManageSettings => 'Permite atualizar as configuracoes globais do core.',
+            self::ViewMedia => 'Permite consultar a biblioteca de midia do core.',
+            self::UploadMedia => 'Permite enviar arquivos para a biblioteca de midia do core.',
+            self::ManageMedia => 'Reserva governanca futura para acoes sensiveis de midia alem do upload.',
             self::ViewAuditLogs => 'Permite consultar os logs de auditoria administrativa do core.',
             self::ViewSystemHealth => 'Permite consultar o diagnostico de saude operacional do sistema.',
         };

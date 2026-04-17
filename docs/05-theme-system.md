@@ -19,6 +19,7 @@ Temas devem controlar apresentacao publica e configuracao visual sem carregar re
 - pagina administrativa minima para listar temas e selecionar o tema ativo
 - integracao do frontend com views do tema ativo e fallback para views do core
 - preparacao inicial para `views/` e `assets/` dentro de cada tema
+- primeira camada real de slots/regioes de layout no frontend inicial
 
 ## Estrutura minima do manifesto
 
@@ -117,6 +118,55 @@ O suporte a `assets/` ainda e apenas preparatorio:
 - sem registro automatico de bundles
 - sem editor visual
 
+## Slots de tema nesta etapa
+
+O sistema agora possui uma camada pequena e explicita de regioes de layout para o frontend inicial.
+
+Slots suportados pelo core nesta fase:
+
+- `hero`
+- `sidebar`
+- `footer_cta`
+
+Contrato publico:
+
+- `App\Core\Contracts\Extensions\Themes\ThemeSlotRegistry`
+- `App\Core\Extensions\Hooks\ThemeSlotBlock`
+- `App\Core\Themes\ThemeSlotRenderer`
+
+Regras atuais:
+
+- o core resolve o slot e aplica o fallback de renderizacao
+- o tema continua responsavel pela apresentacao final
+- plugins so podem contribuir quando estiverem `valid`, `installed` e `enabled`
+- contribuicoes sao blocos simples, com `slot`, `view`, `priority` e `plugin_slug`
+- nao existe editor visual, drag-and-drop ou nesting complexo
+
+Como um tema pode suportar um slot explicitamente:
+
+- `themes/<Theme>/views/slots/hero.blade.php`
+- `themes/<Theme>/views/slots/sidebar.blade.php`
+- `themes/<Theme>/views/slots/footer_cta.blade.php`
+
+Quando a view do slot nao existe no tema ativo:
+
+- o core usa o fallback `resources/views/front/slots/default.blade.php`
+
+Quando nao ha contribuicoes registradas para o slot:
+
+- a renderizacao retorna vazia
+- o frontend continua funcionando sem placeholder artificial
+
+## Integracao oficial inicial
+
+O plugin oficial `Blog` agora publica uma contribuicao simples para o slot `footer_cta` da home.
+
+Objetivo desta contribuicao:
+
+- provar a cadeia completa de hook frontend
+- manter o exemplo pequeno e util
+- preparar terreno para blocos mais ricos sem virar page builder
+
 ## Regras de seguranca atuais
 
 - tema invalido ou incompativel continua visivel no registro
@@ -134,6 +184,9 @@ O suporte a `assets/` ainda e apenas preparatorio:
 - upload, install fisico ou update remoto de temas
 - sistema complexo de templating
 - configuracoes visuais persistidas por tema
+- editor visual de regioes
+- page builder
+- sistema ilimitado de blocos no frontend
 
 ## Direcao futura
 
@@ -146,3 +199,4 @@ Proximas evolucoes naturais, sem implementacao nesta etapa:
 - resolucao mais rica de templates publicos
 - assets com pipeline controlado
 - integracoes futuras com widgets, menus e contracts publicos do core
+- superficies de slot mais ricas, desde que continuem pequenas, explicitas e versionaveis

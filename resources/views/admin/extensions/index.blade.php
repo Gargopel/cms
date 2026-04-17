@@ -216,6 +216,17 @@
                                         @else
                                             <span class="stat-note">Migrations: none declared for this plugin.</span>
                                         @endif
+
+                                        @if ($state['settings']['has_catalog'] ?? false)
+                                            <span class="stat-note">
+                                                Settings: {{ $state['settings']['field_count'] }} field(s) in {{ $state['settings']['group'] }}.
+                                            </span>
+                                            <span class="stat-note">
+                                                Settings permission: {{ $state['settings']['required_permission'] }}{{ ($state['settings']['uses_fallback_permission'] ?? false) ? ' (fallback)' : '' }}.
+                                            </span>
+                                        @else
+                                            <span class="stat-note">Settings: no plugin settings catalog declared.</span>
+                                        @endif
                                     @endif
 
                                     @if (!empty($state['manifest']['provider']))
@@ -240,51 +251,55 @@
                                 @endif
                             </td>
                             <td>
-                                @if ($canManageExtensions)
+                                @if ($canManageExtensions || ($state['can_access_settings_action'] ?? false))
                                     <div class="table-actions">
-                                        @if ($state['can_install_action'] ?? false)
+                                        @if ($canManageExtensions && ($state['can_install_action'] ?? false))
                                             <form method="POST" action="{{ route('admin.extensions.install', $extension) }}">
                                                 @csrf
                                                 <x-admin.button type="submit">Install</x-admin.button>
                                             </form>
-                                        @elseif ($state['can_disable_action'] ?? false)
+                                        @elseif ($canManageExtensions && ($state['can_disable_action'] ?? false))
                                             <form method="POST" action="{{ route('admin.extensions.disable', $extension) }}">
                                                 @csrf
                                                 <x-admin.button type="submit" variant="secondary">Disable</x-admin.button>
                                             </form>
-                                        @elseif ($state['can_enable_action'] ?? false)
+                                        @elseif ($canManageExtensions && ($state['can_enable_action'] ?? false))
                                             <form method="POST" action="{{ route('admin.extensions.enable', $extension) }}">
                                                 @csrf
                                                 <x-admin.button type="submit">Enable</x-admin.button>
                                             </form>
                                         @endif
 
-                                        @if ($state['can_remove_action'] ?? false)
+                                        @if ($canManageExtensions && ($state['can_remove_action'] ?? false))
                                             <form method="POST" action="{{ route('admin.extensions.remove', $extension) }}">
                                                 @csrf
                                                 <x-admin.button type="submit" variant="secondary">Remove</x-admin.button>
                                             </form>
                                         @endif
 
-                                        @if ($state['can_run_migrations_action'] ?? false)
+                                        @if ($canManageExtensions && ($state['can_run_migrations_action'] ?? false))
                                             <form method="POST" action="{{ route('admin.extensions.migrations.run', $extension) }}">
                                                 @csrf
                                                 <x-admin.button type="submit" variant="secondary">Run Migrations</x-admin.button>
                                             </form>
                                         @endif
 
-                                        @if (! ($state['has_any_action'] ?? false))
+                                    @if ($state['can_access_settings_action'] ?? false)
+                                        <x-admin.button href="{{ route('admin.extensions.settings.edit', $extension) }}" variant="secondary">Settings</x-admin.button>
+                                    @endif
+
+                                        @if (! (($canManageExtensions && ($state['has_any_action'] ?? false)) || ($state['can_access_settings_action'] ?? false)))
                                             <span class="subtle">Action unavailable.</span>
                                         @endif
                                     </div>
 
-                                    @if (($state['primary_action'] ?? null) && ! ($state['primary_action']['allowed'] ?? false) && ! empty($state['primary_action']['blocks']))
+                                    @if ($canManageExtensions && ($state['primary_action'] ?? null) && ! ($state['primary_action']['allowed'] ?? false) && ! empty($state['primary_action']['blocks']))
                                         <div class="stack" style="margin-top: 10px;">
                                             <span class="stat-note">{{ $state['primary_action']['blocks'][0]['message'] }}</span>
                                         </div>
                                     @endif
 
-                                    @if (($state['primary_action'] ?? null) && ! empty($state['primary_action']['warnings']))
+                                    @if ($canManageExtensions && ($state['primary_action'] ?? null) && ! empty($state['primary_action']['warnings']))
                                         <div class="stack" style="margin-top: 10px;">
                                             @foreach ($state['primary_action']['warnings'] as $warning)
                                                 <span class="stat-note">{{ $warning['message'] }}</span>
@@ -292,17 +307,25 @@
                                         </div>
                                     @endif
 
-                                    @if (($state['remove'] ?? null) && ! ($state['remove']['allowed'] ?? false) && ! empty($state['remove']['blocks']))
+                                    @if ($canManageExtensions && ($state['remove'] ?? null) && ! ($state['remove']['allowed'] ?? false) && ! empty($state['remove']['blocks']))
                                         <div class="stack" style="margin-top: 10px;">
                                             <span class="stat-note">{{ $state['remove']['blocks'][0]['message'] }}</span>
                                         </div>
                                     @endif
 
-                                    @if ($extension->type?->value === 'plugin' && ($state['migrations'] ?? null) && ! ($state['migrations']['can_run'] ?? false) && (($state['migrations']['pending_count'] ?? 0) > 0 || !empty($state['migrations']['blocks'])))
+                                    @if ($canManageExtensions && $extension->type?->value === 'plugin' && ($state['migrations'] ?? null) && ! ($state['migrations']['can_run'] ?? false) && (($state['migrations']['pending_count'] ?? 0) > 0 || !empty($state['migrations']['blocks'])))
                                         <div class="stack" style="margin-top: 10px;">
                                             <span class="stat-note">
                                                 {{ $state['migrations']['blocks'][0]['message'] ?? $state['migrations']['message'] }}
                                             </span>
+                                        </div>
+                                    @endif
+
+                                    @if (($state['settings']['warnings'] ?? []) !== [])
+                                        <div class="stack" style="margin-top: 10px;">
+                                            @foreach ($state['settings']['warnings'] as $warning)
+                                                <span class="stat-note">{{ $warning }}</span>
+                                            @endforeach
                                         </div>
                                     @endif
                                 @else

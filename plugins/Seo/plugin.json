@@ -1,0 +1,51 @@
+{
+    "name": "Seo",
+    "slug": "seo",
+    "description": "Plugin oficial para defaults e resolucao simples de metadados SEO no frontend.",
+    "version": "0.1.0",
+    "author": "Core Team",
+    "provider": "Plugins\\Seo\\Providers\\SeoServiceProvider",
+    "capabilities": [
+        "integrations",
+        "providers"
+    ],
+    "permissions": [
+        {
+            "slug": "manage_settings",
+            "name": "Manage SEO Settings",
+            "description": "Permite governar os settings persistidos do plugin oficial Seo."
+        }
+    ],
+    "settings": {
+        "permission": "manage_settings",
+        "fields": [
+            {
+                "key": "default_meta_title_suffix",
+                "label": "Default Meta Title Suffix",
+                "description": "Sufixo aplicado ao titulo final quando um conteudo publico declara titulo base.",
+                "type": "string",
+                "input": "text",
+                "default": " | CMS Platform"
+            },
+            {
+                "key": "default_meta_description",
+                "label": "Default Meta Description",
+                "description": "Descricao padrao usada quando o conteudo publico nao fornece descricao especifica.",
+                "type": "text",
+                "input": "textarea",
+                "default": "Plataforma plugin-first em Laravel para sites, CMS, blog e produtos extensíveis."
+            },
+            {
+                "key": "indexing_enabled",
+                "label": "Indexing Enabled",
+                "description": "Quando desativado, o plugin gera robots noindex,nofollow para o frontend publico.",
+                "type": "boolean",
+                "input": "checkbox",
+                "default": true
+            }
+        ]
+    },
+    "core": {
+        "min": "0.1.0"
+    }
+}

@@ -23,6 +23,7 @@ abstract class AbstractExtensionManifest implements ExtensionManifest
         protected array $requires = [],
         protected array $capabilities = [],
         protected array $permissions = [],
+        protected array $settings = [],
         protected array $extra = [],
     ) {
     }
@@ -104,6 +105,11 @@ abstract class AbstractExtensionManifest implements ExtensionManifest
         return $this->permissions;
     }
 
+    public function settings(): array
+    {
+        return $this->settings;
+    }
+
     public function extra(): array
     {
         return $this->extra;
@@ -128,6 +134,7 @@ abstract class AbstractExtensionManifest implements ExtensionManifest
             'requires' => $this->requires(),
             'capabilities' => $this->capabilities(),
             'permissions' => $this->permissions(),
+            'settings' => $this->settings(),
             'path' => $this->path(),
             'manifest_path' => $this->manifestPath(),
             'extra' => $this->extra(),

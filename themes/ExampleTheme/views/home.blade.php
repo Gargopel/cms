@@ -34,6 +34,21 @@
             padding: 56px 28px;
         }
 
+        .layout {
+            display: grid;
+            gap: 24px;
+        }
+
+        .content-grid {
+            display: grid;
+            gap: 24px;
+        }
+
+        .content-grid.has-sidebar {
+            grid-template-columns: minmax(0, 1.65fr) minmax(280px, 0.95fr);
+            align-items: start;
+        }
+
         .panel {
             padding: 40px;
             border-radius: 36px;
@@ -93,6 +108,18 @@
             text-transform: uppercase;
         }
 
+        .slot-shell {
+            padding: 28px;
+            border-radius: 30px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(148, 170, 226, 0.12);
+        }
+
+        .theme-slot {
+            display: grid;
+            gap: 16px;
+        }
+
         @media (max-width: 900px) {
             .meta {
                 grid-template-columns: 1fr;
@@ -101,30 +128,56 @@
             .panel {
                 padding: 28px;
             }
+
+            .content-grid.has-sidebar {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
     <section class="hero">
-        <div class="panel">
-            <span class="eyebrow">Example Theme Active</span>
-            <h1>{{ $siteName }}</h1>
-            <p>{{ $siteTagline !== '' ? $siteTagline : 'O frontend agora esta sendo renderizado por um tema ativo do core, com fallback seguro para o core quando uma view nao existir.' }}</p>
+        <div class="layout">
+            <div class="content-grid{{ $sidebarSlot !== '' ? ' has-sidebar' : '' }}">
+                <div class="panel">
+                    <span class="eyebrow">Example Theme Active</span>
+                    <h1>{{ $siteName }}</h1>
+                    <p>{{ $siteTagline !== '' ? $siteTagline : 'O frontend agora esta sendo renderizado por um tema ativo do core, com fallback seguro para o core quando uma view nao existir.' }}</p>
 
-            <div class="meta">
-                <div class="meta-item">
-                    <span>Theme</span>
-                    <strong>{{ $activeTheme['slug'] ?? 'example-theme' }}</strong>
+                    @if ($heroSlot !== '')
+                        <div style="margin-top: 30px;">
+                            {!! $heroSlot !!}
+                        </div>
+                    @endif
+
+                    <div class="meta">
+                        <div class="meta-item">
+                            <span>Theme</span>
+                            <strong>{{ $activeTheme['slug'] ?? 'example-theme' }}</strong>
+                        </div>
+                        <div class="meta-item">
+                            <span>Locale</span>
+                            <strong>{{ app()->getLocale() }}</strong>
+                        </div>
+                        <div class="meta-item">
+                            <span>Footer</span>
+                            <strong>{{ $footerText !== '' ? $footerText : 'Configured by core settings' }}</strong>
+                        </div>
+                    </div>
                 </div>
-                <div class="meta-item">
-                    <span>Locale</span>
-                    <strong>{{ app()->getLocale() }}</strong>
-                </div>
-                <div class="meta-item">
-                    <span>Footer</span>
-                    <strong>{{ $footerText !== '' ? $footerText : 'Configured by core settings' }}</strong>
-                </div>
+
+                @if ($sidebarSlot !== '')
+                    <aside class="slot-shell">
+                        {!! $sidebarSlot !!}
+                    </aside>
+                @endif
             </div>
+
+            @if ($footerCtaSlot !== '')
+                <div class="slot-shell">
+                    {!! $footerCtaSlot !!}
+                </div>
+            @endif
         </div>
     </section>
 </body>

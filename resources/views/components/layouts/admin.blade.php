@@ -513,6 +513,11 @@
                             <div><strong>Themes</strong><small>Tema ativo e frontend</small></div>
                         </a>
                     @endcan
+                    @can('view_media')
+                        <a class="nav-link {{ request()->routeIs('admin.media.*') ? 'is-active' : '' }}" href="{{ route('admin.media.index') }}">
+                            <div><strong>Media</strong><small>Upload e biblioteca</small></div>
+                        </a>
+                    @endcan
                     <a class="nav-link {{ request()->routeIs('admin.maintenance') || request()->routeIs('admin.maintenance.*') ? 'is-active' : '' }}" href="{{ route('admin.maintenance') }}">
                         <div><strong>Maintenance</strong><small>Operacao segura</small></div>
                     </a>

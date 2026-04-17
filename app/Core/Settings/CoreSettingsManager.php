@@ -27,17 +27,7 @@ class CoreSettingsManager
      */
     public function group(string $group): array
     {
-        $resolved = [];
-
-        foreach ($this->catalog->group($group) as $key => $field) {
-            $resolved[$key] = $field['default'] ?? null;
-        }
-
-        foreach (($this->storedGroups()[$group] ?? []) as $key => $value) {
-            $resolved[$key] = $value;
-        }
-
-        return $resolved;
+        return $this->resolveDefinedGroup($group, $this->catalog->group($group));
     }
 
     public function put(string $key, mixed $value, CoreSettingType|string $type = CoreSettingType::String, string $group = 'general'): CoreSetting
@@ -67,7 +57,40 @@ class CoreSettingsManager
      */
     public function updateGroup(string $group, array $values): array
     {
-        foreach ($this->catalog->group($group) as $key => $field) {
+        return $this->updateDefinedGroup($group, $this->catalog->group($group), $values);
+    }
+
+    /**
+     * @param  array<string, array<string, mixed>>  $fields
+     * @return array<string, mixed>
+     */
+    public function resolveDefinedGroup(string $group, array $fields): array
+    {
+        $resolved = [];
+
+        foreach ($fields as $key => $field) {
+            $resolved[$key] = $field['default'] ?? null;
+        }
+
+        foreach (($this->storedGroups()[$group] ?? []) as $key => $value) {
+            if ($fields !== [] && ! array_key_exists($key, $fields)) {
+                continue;
+            }
+
+            $resolved[$key] = $value;
+        }
+
+        return $resolved;
+    }
+
+    /**
+     * @param  array<string, array<string, mixed>>  $fields
+     * @param  array<string, mixed>  $values
+     * @return array<string, mixed>
+     */
+    public function updateDefinedGroup(string $group, array $fields, array $values): array
+    {
+        foreach ($fields as $key => $field) {
             if (! array_key_exists($key, $values)) {
                 continue;
             }
@@ -82,7 +105,7 @@ class CoreSettingsManager
 
         $this->flushCache();
 
-        return $this->group($group);
+        return $this->resolveDefinedGroup($group, $fields);
     }
 
     public function applyRuntimeConfiguration(): void

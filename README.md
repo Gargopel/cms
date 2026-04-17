@@ -2,7 +2,7 @@
 
 Fundacao inicial de uma plataforma extensivel em Laravel 11, desenhada para evoluir com arquitetura plugin-first e suporte a temas.
 
-O foco do projeto continua sendo um core leve, previsivel e documentado. Nesta etapa, o produto ganhou o primeiro plugin oficial real do ecossistema, `Pages`, provando na pratica discovery, lifecycle, RBAC, hooks administrativos, persistencia propria e renderizacao publica com suporte ao tema ativo.
+O foco do projeto continua sendo um core leve, previsivel e documentado. Nesta etapa, o produto passa a contar com quatro plugins oficiais reais do ecossistema, `Pages`, `Blog`, `Seo` e `Forms`, provando na pratica discovery, lifecycle, RBAC, hooks administrativos, persistencia propria, migrations operacionais por plugin, settings por plugin, submissões persistidas e renderizacao publica com suporte ao tema ativo.
 
 ## Objetivos desta fundacao
 
@@ -83,11 +83,19 @@ Esta base ja inclui:
 - base do theme manager com tema ativo persistido no core
 - selecao segura do tema ativo pelo admin
 - resolucao de views do frontend a partir do tema ativo com fallback para o core
+- slots simples de tema com renderizacao previsivel e contribuicoes elegiveis de plugins no frontend inicial
 - estrutura inicial de temas com suporte a `views/` e `assets/`
 - primeira camada real de hooks/pontos de extensao do core para plugins habilitados
 - registro central de contribuicoes de menu admin e paineis simples de dashboard
-- primeiro plugin oficial real em `plugins/Pages`
+- plugins oficiais reais em `plugins/Pages` e `plugins/Blog`
 - plugin Pages com CRUD administrativo minimo, permissoes proprias e rota publica para paginas publicadas
+- plugin Blog com CRUD administrativo minimo de posts, categorias e tags editoriais simples, listagem publica e fallback por tema
+- plugin Seo com defaults globais de metadados, resolucao simples de SEO no frontend e integracao leve com `Pages` e `Blog`
+- plugin Forms com CRUD administrativo minimo de formularios, campos estruturados, submissões persistidas e rota publica para formularios publicados
+- base real de settings por plugin com catalogo estruturado, persistencia centralizada e UI administrativa minima
+- primeira camada real de media manager do core com upload seguro, persistencia propria e listagem administrativa
+- integracao real do media manager do core com os plugins oficiais `Pages` e `Blog` por meio de imagem destacada opcional
+- selecao segura de imagem destacada a partir da biblioteca central de midia, sem uploader paralelo dentro dos plugins
 
 ## Manifestos, discovery, registro e boot
 
@@ -121,6 +129,7 @@ Nesta etapa, o manifesto normalizado suporta:
 - `requires`
 - `capabilities`
 - `permissions`
+- `settings`
 - `core.min`
 - `core.max`
 
@@ -134,6 +143,7 @@ Uso operacional atual desses campos:
 - `requires` bloqueia `remove` quando existem dependentes ativos da extensao alvo
 - `capabilities` agora sao normalizadas, classificadas entre reconhecidas e custom e expostas no admin e no health
 - `permissions` agora permite que plugins validos e administrativamente instalados sincronizem permissoes proprias no catalogo central do core
+- `settings` agora permite que plugins validos e administrativamente instalados publiquem catalogos explicitos de configuracao persistida em `core_settings`
 - `migrations` agora permite detectar pendencias e executar migrations de plugins validos e administrativamente instalados sem exigir CLI no fluxo basico do admin
 
 Capabilities reconhecidas inicialmente pelo core:
@@ -165,6 +175,17 @@ Permissoes de plugin nesta etapa:
 - existem no sistema apenas para plugins `valid` e `installed`
 - nao dependem de o plugin estar `enabled`
 - sao removidas do catalogo quando o plugin fica `removed`, invalido, incompativel ou fora do lifecycle administrativo elegivel
+
+Settings de plugin nesta etapa:
+
+- sao declarados apenas por plugins em `settings`
+- usam um catalogo pequeno e explicito com `permission` e `fields`
+- cada field suporta, por enquanto, `string`, `text` e `boolean`
+- ficam acessiveis apenas para plugins `valid` e `installed`
+- nao exigem que o plugin esteja `enabled`, permitindo preconfiguracao segura antes do uso operacional
+- sao persistidos em `core_settings` com `group_name = plugin:<slug>`
+- preservam seus valores persistidos mesmo se o plugin ficar `disabled` ou `removed`, mas a UI/catalogo so reaparece quando o plugin volta ao lifecycle elegivel
+- nao representam um form builder generico, nem um sistema de settings de tema
 
 Migrations de plugin nesta etapa:
 
@@ -204,6 +225,20 @@ O plugin oficial `Pages` ja usa essa base para publicar:
 - painel simples `Pages Library` no dashboard
 - permissao exigida `pages.view_pages`
 
+O plugin oficial `Blog` tambem usa essa base para publicar:
+
+- item de navegacao `Blog` no admin
+- painel simples `Blog Posts` no dashboard
+- permissao exigida `blog.view_posts`
+- settings reais do plugin para titulo publico do blog, introducao editorial e exibicao de excerpts
+- bloco simples de `footer_cta` na home publica via slots de tema
+
+O plugin oficial `Forms` tambem usa essa base para publicar:
+
+- item de navegacao `Forms` no admin
+- painel simples `Forms Inbox` no dashboard
+- permissao exigida `forms.view_forms`
+
 Ainda nao existe:
 
 - hook engine amplo
@@ -225,6 +260,8 @@ No frontend:
 
 - o core resolve `views/` do tema ativo usando Blade
 - quando a view esperada nao existe no tema, o sistema usa fallback seguro do core
+- o core tambem consegue renderizar slots pequenos de tema, como `hero`, `sidebar` e `footer_cta`
+- plugins elegiveis podem publicar blocos simples nesses slots usando contratos explicitos
 - assets ja possuem pasta reservada no tema, mas ainda nao existe pipeline avancado nesta etapa
 
 O plugin oficial `Pages` ja usa essa camada com:
@@ -267,8 +304,11 @@ O admin atual continua propositalmente pequeno e focado em operacao:
 - `GET /admin/extensions` com a listagem do registro persistido de plugins e temas
 - `GET /admin/themes` com a listagem de temas descobertos e selecao do tema ativo
 - `GET /admin/pages` com a area administrativa do plugin oficial Pages, quando o plugin estiver instalado e habilitado
+- `GET /admin/blog/posts` com a area administrativa do plugin oficial Blog, quando o plugin estiver instalado e habilitado
 - `POST /admin/extensions/sync` para sincronizacao manual do registro
 - `POST /admin/extensions/{extension}/migrations/run` para executar migrations pendentes de plugin elegivel
+- `GET /admin/extensions/{extension}/settings` para configurar settings de plugins elegiveis com catalogo proprio
+- `GET /admin/media` para biblioteca de mídia do core com upload seguro e metadados básicos
 - `GET /admin/maintenance` com acoes seguras de limpeza de cache e status basico do ambiente
 - `GET /admin/users`, `GET /admin/roles` e `GET /admin/permissions` para governanca inicial de acesso
 - `GET /admin/settings` para configuracao global minima da instancia
@@ -308,6 +348,15 @@ Permissoes publicadas pelo plugin oficial Pages:
 - `pages.publish_pages`
 - `pages.delete_pages`
 
+Permissoes publicadas pelo plugin oficial Blog:
+
+- `blog.view_posts`
+- `blog.create_posts`
+- `blog.edit_posts`
+- `blog.publish_posts`
+- `blog.delete_posts`
+- `blog.manage_settings`
+
 Os settings globais atuais do core ficam organizados no grupo `general`, com persistencia propria e leitura centralizada para:
 
 - nome do site
@@ -338,6 +387,14 @@ O core agora tambem executa health checks basicos para leitura administrativa de
 - superficie basica do registro de extensoes
 - saude operacional do ecossistema de extensoes
 
+O core agora tambem possui uma camada minima de media manager:
+
+- persistencia propria em `media_assets`
+- upload seguro com allowlist de extensoes e mime types
+- armazenamento via disk configuravel do Laravel
+- listagem administrativa com metadados reutilizaveis
+- base pronta para uso futuro por plugins como `Pages` e `Blog`
+
 Na area de extensoes do admin, o core agora permite:
 
 - sincronizar manualmente o discovery do filesystem com o registro persistido
@@ -347,6 +404,7 @@ Na area de extensoes do admin, o core agora permite:
 - desabilitar extensoes habilitadas
 - visualizar se o plugin possui migrations locais e quantas estao pendentes
 - executar migrations pendentes de plugins elegiveis sem depender de terminal
+- abrir e editar settings de plugins elegiveis quando o plugin publicar um catalogo explicito
 - auditar essas acoes como operacoes sensiveis do admin
 - visualizar metadados do manifesto normalizado, incluindo criticidade, provider, vendor, dependencias declaradas e warnings de normalizacao
 - visualizar dependentes ativos quando isso impacta a operacao de disable

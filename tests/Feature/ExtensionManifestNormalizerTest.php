@@ -32,6 +32,30 @@ class ExtensionManifestNormalizerTest extends TestCase
                     'slug' => 'manage_reports',
                     'name' => 'Manage Reports',
                 ],
+                [
+                    'slug' => 'manage_settings',
+                    'name' => 'Manage Settings',
+                ],
+            ],
+            'settings' => [
+                'permission' => 'manage_settings',
+                'fields' => [
+                    [
+                        'key' => 'blog_title',
+                        'label' => 'Blog Title',
+                        'description' => 'Public title.',
+                        'type' => 'string',
+                        'input' => 'text',
+                        'default' => 'Blog',
+                    ],
+                    [
+                        'key' => 'show_excerpts',
+                        'label' => 'Show Excerpts',
+                        'type' => 'boolean',
+                        'input' => 'checkbox',
+                        'default' => true,
+                    ],
+                ],
             ],
         ], ExtensionType::Plugin);
 
@@ -51,7 +75,14 @@ class ExtensionManifestNormalizerTest extends TestCase
                 'name' => 'Manage Reports',
                 'description' => null,
             ],
+            [
+                'slug' => 'manage_settings',
+                'name' => 'Manage Settings',
+                'description' => null,
+            ],
         ], $result->normalized()['permissions']);
+        $this->assertSame('manage_settings', $result->normalized()['settings']['permission']);
+        $this->assertCount(2, $result->normalized()['settings']['fields']);
         $this->assertSame('OpenAI', $result->normalized()['vendor']);
         $this->assertSame([], $result->warnings());
     }
@@ -133,6 +164,44 @@ class ExtensionManifestNormalizerTest extends TestCase
 
         $this->assertTrue($result->isValid());
         $this->assertSame([], $result->normalized()['permissions']);
+        $this->assertNotEmpty($result->warnings());
+    }
+
+    public function test_it_normalizes_plugin_settings_with_warnings_for_invalid_entries(): void
+    {
+        $result = app(ExtensionManifestNormalizer::class)->normalize([
+            'name' => 'Blog',
+            'slug' => 'blog',
+            'description' => 'Blog plugin.',
+            'version' => '0.1.0',
+            'author' => 'Tests',
+            'core' => ['min' => '0.1.0'],
+            'permissions' => [
+                ['slug' => 'manage_settings', 'name' => 'Manage Settings'],
+            ],
+            'settings' => [
+                'permission' => 'blog.manage_settings',
+                'fields' => [
+                    [
+                        'key' => 'blog_title',
+                        'label' => 'Blog Title',
+                        'type' => 'string',
+                        'input' => 'text',
+                        'default' => 'Blog',
+                    ],
+                    [
+                        'key' => 'Invalid Key',
+                        'label' => 'Broken',
+                        'type' => 'string',
+                    ],
+                    'broken-entry',
+                ],
+            ],
+        ], ExtensionType::Plugin);
+
+        $this->assertTrue($result->isValid());
+        $this->assertNull($result->normalized()['settings']['permission']);
+        $this->assertCount(1, $result->normalized()['settings']['fields']);
         $this->assertNotEmpty($result->warnings());
     }
 }

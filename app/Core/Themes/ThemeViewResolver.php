@@ -30,16 +30,21 @@ class ThemeViewResolver
     {
         $this->registerActiveThemeNamespace();
 
-        $activeTheme = $this->themes->activeTheme();
-
-        if (
-            $activeTheme !== null
-            && is_dir($this->themes->viewsPathFor($activeTheme))
-            && view()->exists('theme::'.$themeView)
-        ) {
+        if ($this->themeViewExists($themeView)) {
             return 'theme::'.$themeView;
         }
 
         return $fallbackView;
+    }
+
+    public function themeViewExists(string $themeView): bool
+    {
+        $this->registerActiveThemeNamespace();
+
+        $activeTheme = $this->themes->activeTheme();
+
+        return $activeTheme !== null
+            && is_dir($this->themes->viewsPathFor($activeTheme))
+            && view()->exists('theme::'.$themeView);
     }
 }

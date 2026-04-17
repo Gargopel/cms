@@ -1,0 +1,87 @@
+{
+    "name": "Blog",
+    "slug": "blog",
+    "description": "Plugin oficial editorial para gerenciar posts publicados no ecossistema do core.",
+    "version": "0.1.0",
+    "author": "Core Team",
+    "provider": "Plugins\\Blog\\Providers\\BlogServiceProvider",
+    "capabilities": [
+        "admin_pages",
+        "widgets",
+        "providers"
+    ],
+    "permissions": [
+        {
+            "slug": "view_posts",
+            "name": "View Posts",
+            "description": "Permite listar e consultar posts no admin do plugin Blog."
+        },
+        {
+            "slug": "create_posts",
+            "name": "Create Posts",
+            "description": "Permite criar novos posts no plugin Blog."
+        },
+        {
+            "slug": "edit_posts",
+            "name": "Edit Posts",
+            "description": "Permite editar posts existentes no plugin Blog."
+        },
+        {
+            "slug": "publish_posts",
+            "name": "Publish Posts",
+            "description": "Permite publicar posts no plugin Blog."
+        },
+        {
+            "slug": "delete_posts",
+            "name": "Delete Posts",
+            "description": "Permite remover posts do plugin Blog."
+        },
+        {
+            "slug": "manage_categories",
+            "name": "Manage Categories",
+            "description": "Permite listar, criar e editar categorias editoriais do plugin Blog."
+        },
+        {
+            "slug": "manage_tags",
+            "name": "Manage Tags",
+            "description": "Permite listar, criar e editar tags editoriais do plugin Blog."
+        },
+        {
+            "slug": "manage_settings",
+            "name": "Manage Blog Settings",
+            "description": "Permite governar os settings persistidos do plugin oficial Blog."
+        }
+    ],
+    "settings": {
+        "permission": "manage_settings",
+        "fields": [
+            {
+                "key": "blog_title",
+                "label": "Blog Title",
+                "description": "Titulo publico principal usado na listagem editorial do blog.",
+                "type": "string",
+                "input": "text",
+                "default": "Blog"
+            },
+            {
+                "key": "blog_intro",
+                "label": "Blog Intro",
+                "description": "Texto curto de apoio exibido na listagem publica do blog.",
+                "type": "text",
+                "input": "textarea",
+                "default": "Listagem publica editorial do plugin oficial Blog."
+            },
+            {
+                "key": "show_excerpts",
+                "label": "Show Excerpts",
+                "description": "Exibe o resumo dos posts na listagem publica quando ativo.",
+                "type": "boolean",
+                "input": "checkbox",
+                "default": true
+            }
+        ]
+    },
+    "core": {
+        "min": "0.1.0"
+    }
+}

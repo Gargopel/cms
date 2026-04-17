@@ -4,6 +4,7 @@ namespace App\Core\Extensions\Validation;
 
 use App\Core\Extensions\Capabilities\ExtensionCapabilityCatalog;
 use App\Core\Extensions\Enums\ExtensionType;
+use App\Core\Settings\Enums\CoreSettingType;
 
 class ExtensionManifestNormalizer
 {
@@ -31,6 +32,7 @@ class ExtensionManifestNormalizer
             'requires' => [],
             'capabilities' => [],
             'permissions' => [],
+            'settings' => [],
         ];
 
         if ($normalized['slug'] !== null && preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/', $normalized['slug']) !== 1) {
@@ -83,6 +85,13 @@ class ExtensionManifestNormalizer
         $normalized['requires'] = $this->normalizeRequires($data['requires'] ?? [], $warnings);
         $normalized['capabilities'] = $this->normalizeCapabilities($data['capabilities'] ?? [], $warnings);
         $normalized['permissions'] = $this->normalizePermissions($data['permissions'] ?? [], $type, $normalized['slug'], $warnings);
+        $normalized['settings'] = $this->normalizeSettings(
+            $data['settings'] ?? [],
+            $type,
+            $normalized['slug'],
+            $normalized['permissions'],
+            $warnings,
+        );
 
         return new ExtensionManifestNormalizationResult(
             normalized: $normalized,
@@ -429,5 +438,190 @@ class ExtensionManifestNormalizer
         }
 
         return $permissions;
+    }
+
+    /**
+     * @param  array<int, string>  &$warnings
+     * @param  array<int, array{slug: string, name: string, description: ?string}>  $declaredPermissions
+     * @return array{permission: ?string, fields: array<int, array{key: string, label: string, description: ?string, type: string, input: string, default: mixed}>}
+     */
+    protected function normalizeSettings(
+        mixed $value,
+        ExtensionType $type,
+        ?string $extensionSlug,
+        array $declaredPermissions,
+        array &$warnings,
+    ): array {
+        if ($value === null || $value === []) {
+            return [];
+        }
+
+        if ($type !== ExtensionType::Plugin) {
+            $warnings[] = 'Field [settings] was ignored because only plugins can declare settings in this phase.';
+
+            return [];
+        }
+
+        if (! is_array($value)) {
+            $warnings[] = 'Field [settings] was ignored because it must be an object when present.';
+
+            return [];
+        }
+
+        $normalizedPermission = null;
+        $permission = $value['permission'] ?? null;
+
+        if ($permission !== null) {
+            if (! is_string($permission) || trim($permission) === '') {
+                $warnings[] = 'Field [settings.permission] was ignored because it must be a non-empty string when present.';
+            } else {
+                $normalizedPermission = strtolower(trim($permission));
+
+                if ($extensionSlug !== null && str_starts_with($normalizedPermission, $extensionSlug.'.')) {
+                    $warnings[] = sprintf(
+                        'Field [settings.permission] should declare a local slug only. The plugin prefix [%s.] will be added automatically by the core.',
+                        $extensionSlug,
+                    );
+                    $normalizedPermission = null;
+                } elseif (preg_match('/^[a-z0-9_]+(?:[.-][a-z0-9_]+)*$/', $normalizedPermission) !== 1) {
+                    $warnings[] = 'Field [settings.permission] was ignored because it must use lowercase letters, numbers, underscores, dots or hyphens only.';
+                    $normalizedPermission = null;
+                }
+            }
+        }
+
+        $fields = $value['fields'] ?? null;
+
+        if (! is_array($fields)) {
+            if ($fields !== null) {
+                $warnings[] = 'Field [settings.fields] was ignored because it must be an array when present.';
+            }
+
+            return [
+                'permission' => $normalizedPermission,
+                'fields' => [],
+            ];
+        }
+
+        $normalizedFields = [];
+        $seenKeys = [];
+
+        foreach ($fields as $index => $field) {
+            if (! is_array($field)) {
+                $warnings[] = sprintf(
+                    'Plugin setting entry [%s] was ignored because it must be an object with [key] and [label].',
+                    (string) $index,
+                );
+
+                continue;
+            }
+
+            $key = $field['key'] ?? null;
+            $label = $field['label'] ?? null;
+            $description = $field['description'] ?? null;
+            $typeValue = $field['type'] ?? CoreSettingType::String->value;
+            $input = $field['input'] ?? null;
+            $default = $field['default'] ?? null;
+
+            if (! is_string($key) || trim($key) === '') {
+                $warnings[] = sprintf(
+                    'Plugin setting entry [%s] was ignored because field [key] is required and must be a non-empty string.',
+                    (string) $index,
+                );
+
+                continue;
+            }
+
+            $normalizedKey = strtolower(trim($key));
+
+            if (preg_match('/^[a-z0-9_]+(?:[.-][a-z0-9_]+)*$/', $normalizedKey) !== 1) {
+                $warnings[] = sprintf(
+                    'Plugin setting [%s] was ignored because [key] must use lowercase letters, numbers, underscores, dots or hyphens only.',
+                    trim($key),
+                );
+
+                continue;
+            }
+
+            if (isset($seenKeys[$normalizedKey])) {
+                $warnings[] = sprintf(
+                    'Plugin setting [%s] was ignored because the key was declared more than once in the same plugin manifest.',
+                    $normalizedKey,
+                );
+
+                continue;
+            }
+
+            if (! is_string($label) || trim($label) === '') {
+                $warnings[] = sprintf(
+                    'Plugin setting [%s] was ignored because field [label] is required and must be a non-empty string.',
+                    $normalizedKey,
+                );
+
+                continue;
+            }
+
+            if (! is_string($typeValue) || ! in_array($typeValue, array_column(CoreSettingType::cases(), 'value'), true)) {
+                $warnings[] = sprintf(
+                    'Plugin setting [%s] was ignored because field [type] must be one of [%s].',
+                    $normalizedKey,
+                    implode(', ', array_column(CoreSettingType::cases(), 'value')),
+                );
+
+                continue;
+            }
+
+            $resolvedInput = is_string($input) && trim($input) !== ''
+                ? strtolower(trim($input))
+                : match ($typeValue) {
+                    CoreSettingType::Text->value => 'textarea',
+                    CoreSettingType::Boolean->value => 'checkbox',
+                    default => 'text',
+                };
+
+            if (! in_array($resolvedInput, ['text', 'email', 'textarea', 'checkbox'], true)) {
+                $warnings[] = sprintf(
+                    'Plugin setting [%s] was ignored because field [input] must be one of [text, email, textarea, checkbox].',
+                    $normalizedKey,
+                );
+
+                continue;
+            }
+
+            $seenKeys[$normalizedKey] = true;
+
+            $normalizedFields[] = [
+                'key' => $normalizedKey,
+                'label' => trim($label),
+                'description' => is_string($description) && trim($description) !== '' ? trim($description) : null,
+                'type' => $typeValue,
+                'input' => $resolvedInput,
+                'default' => $this->normalizeSettingDefault($default, CoreSettingType::from($typeValue)),
+            ];
+        }
+
+        if (
+            $normalizedPermission !== null &&
+            ! collect($declaredPermissions)->pluck('slug')->contains($normalizedPermission)
+        ) {
+            $warnings[] = sprintf(
+                'Field [settings.permission] references [%s], but this permission was not declared in the plugin permission catalog. The admin will fall back to manage_extensions.',
+                $normalizedPermission,
+            );
+            $normalizedPermission = null;
+        }
+
+        return [
+            'permission' => $normalizedPermission,
+            'fields' => $normalizedFields,
+        ];
+    }
+
+    protected function normalizeSettingDefault(mixed $value, CoreSettingType $type): mixed
+    {
+        return match ($type) {
+            CoreSettingType::Boolean => is_bool($value) ? $value : filter_var($value, FILTER_VALIDATE_BOOL),
+            CoreSettingType::String, CoreSettingType::Text => $value === null ? null : trim((string) $value),
+        };
     }
 }

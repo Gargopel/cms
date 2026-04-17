@@ -40,6 +40,29 @@
             box-shadow: 0 30px 100px rgba(0, 0, 0, 0.35);
         }
 
+        .layout {
+            display: grid;
+            gap: 24px;
+        }
+
+        .content-shell {
+            display: grid;
+            gap: 24px;
+        }
+
+        .content-shell.has-sidebar {
+            grid-template-columns: minmax(0, 1.7fr) minmax(280px, 0.9fr);
+            align-items: start;
+        }
+
+        .primary-card,
+        .slot-card {
+            padding: 28px;
+            border-radius: 28px;
+            border: 1px solid rgba(148, 170, 226, 0.14);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
         .eyebrow {
             display: inline-flex;
             margin-bottom: 18px;
@@ -83,25 +106,60 @@
             background: rgba(255, 255, 255, 0.03);
             color: var(--muted);
         }
+
+        .theme-slot {
+            display: grid;
+            gap: 16px;
+        }
+
+        @media (max-width: 900px) {
+            .content-shell.has-sidebar {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
     <main class="shell">
-        <span class="eyebrow">Core Frontend Fallback</span>
-        <h1>{{ $siteName }}</h1>
-        <p>
-            {{ $siteTagline !== '' ? $siteTagline : 'O frontend esta usando a view padrao do core porque nenhum tema ativo forneceu um template dedicado para esta rota.' }}
-        </p>
+        <div class="layout">
+            <div class="content-shell{{ $sidebarSlot !== '' ? ' has-sidebar' : '' }}">
+                <section class="primary-card">
+                    <span class="eyebrow">Core Frontend Fallback</span>
+                    <h1>{{ $siteName }}</h1>
+                    <p>
+                        {{ $siteTagline !== '' ? $siteTagline : 'O frontend esta usando a view padrao do core porque nenhum tema ativo forneceu um template dedicado para esta rota.' }}
+                    </p>
 
-        <div class="meta">
-            <span>Theme: {{ $activeTheme['slug'] ?? 'core-fallback' }}</span>
-            <span>Locale: {{ app()->getLocale() }}</span>
-            <span>Timezone: {{ config('app.timezone') }}</span>
+                    @if ($heroSlot !== '')
+                        <div style="margin-top: 28px;">
+                            {!! $heroSlot !!}
+                        </div>
+                    @endif
+
+                    <div class="meta">
+                        <span>Theme: {{ $activeTheme['slug'] ?? 'core-fallback' }}</span>
+                        <span>Locale: {{ app()->getLocale() }}</span>
+                        <span>Timezone: {{ config('app.timezone') }}</span>
+                    </div>
+
+                    @if ($footerText !== '')
+                        <p style="margin-top: 24px;">{{ $footerText }}</p>
+                    @endif
+                </section>
+
+                @if ($sidebarSlot !== '')
+                    <aside class="slot-card">
+                        {!! $sidebarSlot !!}
+                    </aside>
+                @endif
+            </div>
+
+            @if ($footerCtaSlot !== '')
+                <section class="slot-card">
+                    {!! $footerCtaSlot !!}
+                </section>
+            @endif
         </div>
-
-        @if ($footerText !== '')
-            <p style="margin-top: 24px;">{{ $footerText }}</p>
-        @endif
     </main>
 </body>
 </html>

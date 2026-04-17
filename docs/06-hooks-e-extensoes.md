@@ -25,16 +25,19 @@ Superficies suportadas agora:
 
 - itens de navegacao do admin
 - paineis simples de dashboard
+- slots simples de tema no frontend inicial
 
 Contratos publicos expostos pelo core:
 
 - `App\Core\Contracts\Extensions\Admin\AdminNavigationRegistry`
 - `App\Core\Contracts\Extensions\Admin\AdminDashboardPanelRegistry`
+- `App\Core\Contracts\Extensions\Themes\ThemeSlotRegistry`
 
 DTOs usados para contribuicoes:
 
 - `App\Core\Extensions\Hooks\AdminNavigationItem`
 - `App\Core\Extensions\Hooks\AdminDashboardPanel`
+- `App\Core\Extensions\Hooks\ThemeSlotBlock`
 
 Registro central:
 
@@ -44,9 +47,11 @@ Servico de consumo no admin:
 
 - `App\Core\Admin\Support\AdminExtensionPointService`
 
-Primeiro consumidor oficial desta camada:
+Consumidores oficiais desta camada:
 
 - plugin `Pages`, que publica um item de menu administrativo e um painel simples de dashboard
+- plugin `Blog`, que publica um item de menu administrativo, um painel simples de dashboard e um bloco inicial de `footer_cta` para o frontend
+- plugin `Forms`, que publica um item de menu administrativo e um painel simples de dashboard para consulta operacional de formularios
 
 ## Regras de seguranca e elegibilidade
 
@@ -61,9 +66,11 @@ Regras adicionais:
 
 - a contribuicao precisa carregar o `plugin_slug` de origem
 - o registro central nao executa auto-discovery magico de menus
+- o registro central nao executa auto-discovery magico de blocos de frontend
 - a view nao decide elegibilidade de plugin
 - a view nao decide autorizacao
 - se a contribuicao declarar permissao exigida, o admin so a mostra para usuarios que possam acessa-la
+- slots de frontend nao abrem uma engine visual nova; eles apenas registram blocos server-rendered em regioes pequenas e conhecidas
 
 ## O que isso habilita no futuro
 
@@ -72,9 +79,17 @@ Com essa base, o sistema agora ja consegue evoluir para:
 - primeiras paginas administrativas oficiais de plugins
 - paineis operacionais simples no dashboard
 - grupos controlados de surfaces futuras, como settings sections
+- regioes publicas pequenas e previsiveis no tema ativo
 - integracao de plugins oficiais sem acoplamento improvisado ao layout do admin
 
-O plugin `Pages` ja demonstra essa evolucao nesta etapa sem introduzir framework magico de hooks.
+Os plugins `Pages` e `Blog` ja demonstram essa evolucao nesta etapa sem introduzir framework magico de hooks.
+
+No frontend, o `Blog` ja demonstra a mesma ideia sem criar page builder:
+
+- um slot `footer_cta` pequeno
+- um bloco simples publicado pelo provider do plugin
+- renderizacao pelo tema ativo quando a view `views/slots/footer_cta.blade.php` existir
+- fallback do core quando o tema nao declarar o slot explicitamente
 
 ## O que ainda nao existe
 
@@ -86,6 +101,8 @@ O plugin `Pages` ja demonstra essa evolucao nesta etapa sem introduzir framework
 - automacoes baseadas em hooks
 - menus automaticos a partir de manifesto
 - surfaces dinamicas arbitrarias
+- page builder
+- layout builder visual
 
 ## Motivo
 

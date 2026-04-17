@@ -1,0 +1,47 @@
+{
+    "name": "Forms",
+    "slug": "forms",
+    "description": "Plugin oficial enxuto para formularios publicos simples com submissao persistida no ecossistema do core.",
+    "version": "0.1.0",
+    "author": "Core Team",
+    "provider": "Plugins\\Forms\\Providers\\FormsServiceProvider",
+    "capabilities": [
+        "admin_pages",
+        "providers"
+    ],
+    "permissions": [
+        {
+            "slug": "view_forms",
+            "name": "View Forms",
+            "description": "Permite listar e consultar formularios no admin do plugin Forms."
+        },
+        {
+            "slug": "create_forms",
+            "name": "Create Forms",
+            "description": "Permite criar novos formularios no plugin Forms."
+        },
+        {
+            "slug": "edit_forms",
+            "name": "Edit Forms",
+            "description": "Permite editar formularios e seus campos no plugin Forms."
+        },
+        {
+            "slug": "publish_forms",
+            "name": "Publish Forms",
+            "description": "Permite publicar formularios para acesso publico."
+        },
+        {
+            "slug": "delete_forms",
+            "name": "Delete Forms",
+            "description": "Permite remover formularios do plugin Forms."
+        },
+        {
+            "slug": "view_form_submissions",
+            "name": "View Form Submissions",
+            "description": "Permite consultar submissões persistidas dos formularios no admin do plugin Forms."
+        }
+    ],
+    "core": {
+        "min": "0.1.0"
+    }
+}

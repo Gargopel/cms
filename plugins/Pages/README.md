@@ -50,6 +50,7 @@ Campos atuais:
 - `slug`
 - `content`
 - `status`
+- `featured_image_id` opcional
 - `created_at`
 - `updated_at`
 
@@ -70,6 +71,13 @@ Fallback de views:
 
 - override por tema ativo: `themes/<Theme>/views/plugins/pages/show.blade.php`
 - fallback do plugin: `pages::front.show`
+
+Imagem destacada:
+
+- o plugin pode referenciar um `media_assets.id` do core como imagem destacada opcional
+- a selecao acontece no formulario administrativo a partir da biblioteca central de midia
+- apenas assets de imagem validos sao aceitos
+- quando a imagem nao existe, a renderizacao publica continua normalmente sem bloco visual extra
 
 ## Nota operacional
 

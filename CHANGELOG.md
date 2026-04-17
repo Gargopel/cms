@@ -103,6 +103,38 @@ O formato segue uma convencao inspirada em Keep a Changelog, com foco em clareza
 - testes automatizados do plugin oficial Pages cobrindo admin, RBAC, publicacao publica e override por tema
 - camada operacional inicial de migrations por plugin, com descoberta de arquivos, deteccao de pendencias e execucao segura via admin
 - testes automatizados das operacoes administrativas e do servico central de migrations por plugin
+- segundo plugin oficial real do ecossistema em `plugins/Blog`
+- plugin Blog com manifesto completo, permissoes proprias, hooks administrativos, rotas proprias, persistencia minima de posts e renderizacao publica com fallback por tema
+- testes automatizados do plugin oficial Blog cobrindo admin, RBAC, rotas publicas, fallback por tema e compatibilidade com migrations operacionais
+- primeira camada real de settings por plugin com catalogo explicito no manifesto, leitura centralizada, fallback seguro e persistencia em `core_settings`
+- pagina administrativa minima para editar settings de plugins elegiveis
+- uso real dessa camada no plugin oficial Blog para titulo publico, introducao editorial e toggle de excerpts
+- testes automatizados de catalogo, persistencia, permissao e auditoria de settings por plugin
+- primeira camada real de media manager do core com persistencia propria, upload seguro e listagem administrativa
+- permissoes `view_media`, `upload_media` e `manage_media` para governanca incremental da biblioteca de mídia
+- testes automatizados cobrindo upload valido, bloqueio de upload invalido, persistencia, autenticacao e autorizacao da area de mídia
+- integracao real do media manager do core com os plugins oficiais `Pages` e `Blog` por imagem destacada opcional
+- validacao segura para referencias de midia inexistentes ou nao-imagem em `Pages` e `Blog`
+- migrations dos plugins `Pages` e `Blog` para persistir `featured_image_id`
+- testes automatizados cobrindo persistencia, bloqueio de referencia invalida e renderizacao publica com e sem imagem destacada
+- categorias editoriais simples no plugin oficial `Blog`, com CRUD administrativo minimo e associacao opcional de categoria principal ao post
+- rota publica `/blog/category/{slug}` com listagem apenas de posts publicados da categoria selecionada
+- testes automatizados cobrindo CRUD de categorias, associacao ao post, permissao e fallback por tema na listagem por categoria
+- tags editoriais simples no plugin oficial `Blog`, com CRUD administrativo minimo e associacao multipla por pivot propria
+- rota publica `/blog/tag/{slug}` com listagem apenas de posts publicados da tag selecionada
+- testes automatizados cobrindo CRUD de tags, associacao ao post, permissao e fallback por tema na listagem por tag
+- terceiro plugin oficial real do ecossistema em `plugins/Seo`
+- plugin Seo com settings globais enxutos, resolvedor simples de metadados e renderizacao de metatags no frontend de `Pages` e `Blog`
+- testes automatizados cobrindo defaults, permissao para settings, integracao com `Pages`, integracao com `Blog` e compatibilidade com tema ativo
+- primeira camada real de theme slots/regioes de layout com contrato explicito, renderer previsivel e fallback seguro no frontend
+- suporte inicial a slots `hero`, `sidebar` e `footer_cta`
+- contribuicoes simples de plugins elegiveis para slots do tema via registry central de hooks
+- integracao oficial inicial do plugin `Blog` com um bloco simples em `footer_cta`
+- testes automatizados cobrindo registro de contribuicoes, elegibilidade operacional e renderizacao de slots com tema ativo
+- quarto plugin oficial real do ecossistema em `plugins/Forms`
+- plugin Forms com manifesto completo, permissoes proprias, hooks administrativos, rotas proprias, persistencia de formularios, campos, submissões e valores de submissao
+- renderizacao publica simples de formularios publicados com fallback por tema e submissao persistida
+- testes automatizados cobrindo CRUD de formularios, campos, submissões publicas, restricao por permissao e compatibilidade com tema ativo
 
 ### Changed
 - `README.md` reescrito para refletir a proposta plugin-first
@@ -129,10 +161,14 @@ O formato segue uma convencao inspirada em Keep a Changelog, com foco em clareza
 - a area de extensoes do admin agora diferencia discovery, lifecycle administrativo e estado operacional
 - o sync do registry agora preserva extensoes marcadas como `removed` em vez de reinstala-las automaticamente
 - o frontend padrao agora resolve a view inicial a partir do tema ativo quando disponivel
+- o frontend inicial agora consegue renderizar slots pequenos de tema sem introduzir page builder ou engine visual nova
 - a area administrativa de permissoes agora exibe origem explicita de permissoes do core e de plugins
 - o dashboard e o sidebar do admin agora podem consumir superficies publicadas por plugins elegiveis
 - o bootstrap condicional agora sincroniza router e `UrlGenerator` ao registrar providers de plugins, mantendo rotas nomeadas e redirects consistentes para plugins oficiais
 - a area de extensoes do admin agora exibe status de migrations de plugin e permite executar pendencias sem depender de CLI
+- o manifesto normalizado agora suporta `settings` para plugins, com warnings de normalizacao e leitura previsivel
+- a tela de extensoes do admin agora indica catalogo de settings por plugin e oferece atalho seguro para sua governanca
+- o admin do core agora expoe a biblioteca de mídia como área operacional própria, sem introduzir DAM complexo
 
 ### Notes
 - ainda nao ha plugin manager completo, theme manager completo ou mecanismo completo de upgrade

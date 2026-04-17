@@ -23,7 +23,7 @@ O sistema de plugins permitira extender a plataforma sem alterar o core.
 - health check especifico do ecossistema de extensoes
 - capabilities operacionais observaveis via contrato explicito do core
 - camada operacional inicial de migrations por plugin
-- primeiro plugin oficial real do ecossistema em `plugins/Pages`
+- plugins oficiais reais do ecossistema em `plugins/Pages`, `plugins/Blog`, `plugins/Seo` e `plugins/Forms`
 
 ## Estrutura minima do manifesto
 
@@ -45,6 +45,7 @@ Campos opcionais normalizados nesta etapa:
 - `critical`
 - `capabilities`
 - `permissions`
+- `settings`
 
 Estrutura opcional esperada para migrations nesta etapa:
 
@@ -56,6 +57,93 @@ O plugin oficial `Pages` usa esse contrato para declarar:
 - capability `admin_pages`
 - permissoes administrativas do plugin
 - rotas e views registradas pelo provider
+
+O plugin oficial `Blog` usa o mesmo contrato para declarar:
+
+- provider proprio
+- capabilities observaveis do plugin editorial
+- permissoes administrativas do plugin
+- catalogo pequeno de settings persistidos do plugin
+- rotas administrativas e publicas registradas pelo provider
+- migrations proprias compativeis com o runner operacional do core
+- evolucao editorial simples com categorias sem virar taxonomia generica
+- evolucao editorial simples com tags por pivot propria, sem virar taxonomia generica
+
+O plugin oficial `Seo` usa o mesmo contrato para declarar:
+
+- provider proprio
+- permissao para governar settings do plugin
+- catalogo pequeno de defaults globais de SEO
+- resolvedor simples de metadados consumido opcionalmente por outros plugins publicos
+
+O plugin oficial `Forms` usa o mesmo contrato para declarar:
+
+- provider proprio
+- capacidades observaveis para superficie administrativa do plugin
+- permissoes administrativas do plugin
+- rotas administrativas e publicas registradas pelo provider
+- migrations proprias compativeis com o runner operacional do core
+- modelagem explicita para formularios, campos, submissões e valores
+- renderizacao publica simples com fallback por tema
+
+## Settings de plugin nesta etapa
+
+Plugins agora podem declarar um catalogo pequeno e explicito de settings diretamente no manifesto normalizado.
+
+Formato suportado:
+
+```json
+{
+  "settings": {
+    "permission": "manage_settings",
+    "fields": [
+      {
+        "key": "blog_title",
+        "label": "Blog Title",
+        "description": "Public title for the blog index.",
+        "type": "string",
+        "input": "text",
+        "default": "Blog"
+      },
+      {
+        "key": "show_excerpts",
+        "label": "Show Excerpts",
+        "type": "boolean",
+        "input": "checkbox",
+        "default": true
+      }
+    ]
+  }
+}
+```
+
+Regras atuais:
+
+- apenas plugins podem declarar `settings`
+- o campo `permission` usa slug local do plugin, sem prefixo
+- o catalogo atual suporta apenas `string`, `text` e `boolean`
+- `input` aceitos nesta fase: `text`, `email`, `textarea`, `checkbox`
+- entradas malformadas geram warnings de normalizacao e nao quebram o discovery
+- o core nao trata isso como form builder generico nem como engine ilimitada de configuracao
+
+Criterio escolhido nesta fase:
+
+- o catalogo de settings de plugin existe apenas para plugins `valid` e `installed`
+- plugins `disabled` continuam podendo ser configurados
+- plugins `removed`, invalidos ou incompativeis deixam de expor o catalogo no admin
+
+Justificativa:
+
+- `installed` representa que o plugin ja foi aceito no lifecycle administrativo
+- permitir settings antes do `enabled` evita depender do provider bootado para configuracao basica
+- isso preserva a separacao entre lifecycle administrativo, operacao runtime e configuracao persistida
+
+Persistencia atual:
+
+- os valores ficam em `core_settings`
+- cada plugin usa `group_name = plugin:<slug>`
+- os dados nao sao apagados automaticamente quando o plugin e desabilitado ou removido logicamente
+- quando o plugin volta a ficar elegivel, os valores persistidos reaparecem com fallback seguro para defaults do catalogo
 
 ## Pontos de extensao publicos nesta etapa
 
@@ -79,6 +167,16 @@ O plugin oficial `Pages` ja consome esses contratos para publicar:
 
 - item de menu `Pages`
 - painel simples `Pages Library`
+
+O plugin oficial `Blog` tambem consome esses contratos para publicar:
+
+- item de menu `Blog`
+- painel simples `Blog Posts`
+
+O plugin oficial `Forms` tambem consome esses contratos para publicar:
+
+- item de menu `Forms`
+- painel simples `Forms Inbox`
 
 ## Raw manifest x manifesto normalizado
 
@@ -401,6 +499,8 @@ Com isso, a plataforma ja consegue expor visualmente:
 - acoes administrativas reais de sync, enable e disable
 - origem explicita de permissoes do core e de plugins instalados
 - e a primeira area administrativa real de um plugin oficial em `/admin/pages`
+- e a segunda area administrativa real de um plugin oficial em `/admin/blog/posts`
+- e a primeira camada administrativa real de settings de plugin em `/admin/extensions/{extension}/settings`
 
 As operacoes sensiveis dessa area sao auditadas pelo core.
 Tentativas bloqueadas tambem podem ser auditadas para manter rastreabilidade operacional.

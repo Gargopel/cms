@@ -4,6 +4,7 @@ namespace App\Core\Extensions\Hooks;
 
 use App\Core\Contracts\Extensions\Admin\AdminDashboardPanelRegistry;
 use App\Core\Contracts\Extensions\Admin\AdminNavigationRegistry;
+use App\Core\Contracts\Extensions\Themes\ThemeSlotRegistry;
 use App\Core\Extensions\Enums\ExtensionDiscoveryStatus;
 use App\Core\Extensions\Enums\ExtensionLifecycleStatus;
 use App\Core\Extensions\Enums\ExtensionOperationalStatus;
@@ -11,7 +12,7 @@ use App\Core\Extensions\Enums\ExtensionType;
 use App\Core\Extensions\Models\ExtensionRecord;
 use Illuminate\Support\Facades\Schema;
 
-class ExtensionHookRegistry implements AdminNavigationRegistry, AdminDashboardPanelRegistry
+class ExtensionHookRegistry implements AdminNavigationRegistry, AdminDashboardPanelRegistry, ThemeSlotRegistry
 {
     /**
      * @var array<string, AdminNavigationItem>
@@ -22,6 +23,11 @@ class ExtensionHookRegistry implements AdminNavigationRegistry, AdminDashboardPa
      * @var array<string, AdminDashboardPanel>
      */
     protected array $dashboardPanels = [];
+
+    /**
+     * @var array<string, ThemeSlotBlock>
+     */
+    protected array $themeSlotBlocks = [];
 
     public function registerAdminNavigationItem(AdminNavigationItem $item): void
     {
@@ -41,6 +47,15 @@ class ExtensionHookRegistry implements AdminNavigationRegistry, AdminDashboardPa
         $this->dashboardPanels[$panel->uniqueKey()] = $panel;
     }
 
+    public function registerThemeSlotBlock(ThemeSlotBlock $block): void
+    {
+        if (! $this->acceptsPluginContributions($block->pluginSlug())) {
+            return;
+        }
+
+        $this->themeSlotBlocks[$block->uniqueKey()] = $block;
+    }
+
     /**
      * @return array<int, AdminNavigationItem>
      */
@@ -55,6 +70,17 @@ class ExtensionHookRegistry implements AdminNavigationRegistry, AdminDashboardPa
     public function adminDashboardPanels(): array
     {
         return array_values($this->dashboardPanels);
+    }
+
+    /**
+     * @return array<int, ThemeSlotBlock>
+     */
+    public function themeSlotBlocks(string $slot): array
+    {
+        return array_values(array_filter(
+            $this->themeSlotBlocks,
+            fn (ThemeSlotBlock $block): bool => $block->slot() === $slot,
+        ));
     }
 
     protected function acceptsPluginContributions(string $pluginSlug): bool
