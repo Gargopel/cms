@@ -9,7 +9,9 @@ use App\Core\Extensions\Hooks\AdminDashboardPanel;
 use App\Core\Extensions\Hooks\AdminNavigationItem;
 use App\Core\Extensions\Hooks\ThemeSlotBlock;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Schema;
 use Plugins\Blog\Enums\BlogPermission;
+use Plugins\Blog\Models\Post;
 
 class BlogServiceProvider extends ServiceProvider
 {
@@ -54,6 +56,48 @@ class BlogServiceProvider extends ServiceProvider
                     'href' => '/blog',
                     'cta_label' => 'Explorar Blog',
                 ],
+                themeView: 'plugins.blog.slots.footer-cta',
+            )
+        );
+
+        $this->app->make(ThemeSlotRegistry::class)->registerThemeSlotBlock(
+            new ThemeSlotBlock(
+                pluginSlug: 'blog',
+                key: 'blog-recent-posts',
+                slot: 'sidebar',
+                view: 'blog::slots.recent-posts',
+                priority: 20,
+                data: [
+                    'title' => 'Recent Blog Posts',
+                    'description' => 'Editorial stream from the official Blog plugin.',
+                    'browse_href' => '/blog',
+                ],
+                themeView: 'plugins.blog.slots.recent-posts',
+                dataResolver: function (array $context): ?array {
+                    if (($context['surface'] ?? null) !== 'home') {
+                        return null;
+                    }
+
+                    if (! Schema::hasTable('plugin_blog_posts')) {
+                        return null;
+                    }
+
+                    $posts = Post::query()
+                        ->published()
+                        ->with(['category'])
+                        ->orderByDesc('published_at')
+                        ->orderByDesc('id')
+                        ->limit(3)
+                        ->get();
+
+                    if ($posts->isEmpty()) {
+                        return null;
+                    }
+
+                    return [
+                        'posts' => $posts,
+                    ];
+                },
             )
         );
     }

@@ -84,16 +84,17 @@ Esta base ja inclui:
 - selecao segura do tema ativo pelo admin
 - resolucao de views do frontend a partir do tema ativo com fallback para o core
 - slots simples de tema com renderizacao previsivel e contribuicoes elegiveis de plugins no frontend inicial
+- blocos de slot agora podem resolver dados no backend e permitir override opcional da propria view pelo tema ativo
 - estrutura inicial de temas com suporte a `views/` e `assets/`
 - primeira camada real de hooks/pontos de extensao do core para plugins habilitados
 - registro central de contribuicoes de menu admin e paineis simples de dashboard
 - plugins oficiais reais em `plugins/Pages` e `plugins/Blog`
 - plugin Pages com CRUD administrativo minimo, permissoes proprias e rota publica para paginas publicadas
-- plugin Blog com CRUD administrativo minimo de posts, categorias e tags editoriais simples, listagem publica e fallback por tema
-- plugin Seo com defaults globais de metadados, resolucao simples de SEO no frontend e integracao leve com `Pages` e `Blog`
-- plugin Forms com CRUD administrativo minimo de formularios, campos estruturados, submissões persistidas e rota publica para formularios publicados
+- plugin Blog com CRUD administrativo minimo de posts, categorias e tags editoriais simples, busca/filtros operacionais no admin, busca publica leve e fallback por tema
+- plugin Seo com defaults globais de metadados, resolucao simples de SEO no frontend, sitemap XML basico e integracao leve com `Pages` e `Blog`
+- plugin Forms com CRUD administrativo minimo de formularios, campos estruturados, submissoes persistidas, settings proprios para notificacao simples e rota publica para formularios publicados
 - base real de settings por plugin com catalogo estruturado, persistencia centralizada e UI administrativa minima
-- primeira camada real de media manager do core com upload seguro, persistencia propria e listagem administrativa
+- primeira camada real de media manager do core com upload seguro, persistencia propria, listagem administrativa, exclusao segura e substituicao simples de arquivo
 - integracao real do media manager do core com os plugins oficiais `Pages` e `Blog` por meio de imagem destacada opcional
 - selecao segura de imagem destacada a partir da biblioteca central de midia, sem uploader paralelo dentro dos plugins
 
@@ -232,12 +233,14 @@ O plugin oficial `Blog` tambem usa essa base para publicar:
 - permissao exigida `blog.view_posts`
 - settings reais do plugin para titulo publico do blog, introducao editorial e exibicao de excerpts
 - bloco simples de `footer_cta` na home publica via slots de tema
+- bloco rico de posts recentes em `sidebar` na home publica
 
 O plugin oficial `Forms` tambem usa essa base para publicar:
 
 - item de navegacao `Forms` no admin
 - painel simples `Forms Inbox` no dashboard
 - permissao exigida `forms.view_forms`
+- CTA reutilizavel em `footer_cta` para formularios publicados
 
 Ainda nao existe:
 
@@ -261,7 +264,8 @@ No frontend:
 - o core resolve `views/` do tema ativo usando Blade
 - quando a view esperada nao existe no tema, o sistema usa fallback seguro do core
 - o core tambem consegue renderizar slots pequenos de tema, como `hero`, `sidebar` e `footer_cta`
-- plugins elegiveis podem publicar blocos simples nesses slots usando contratos explicitos
+- plugins elegiveis podem publicar blocos simples e blocos mais ricos nesses slots usando contratos explicitos
+- o tema pode sobrescrever tanto o wrapper do slot quanto a view de um bloco quando esse contrato expuser um caminho de override
 - assets ja possuem pasta reservada no tema, mas ainda nao existe pipeline avancado nesta etapa
 
 O plugin oficial `Pages` ja usa essa camada com:
@@ -393,6 +397,8 @@ O core agora tambem possui uma camada minima de media manager:
 - upload seguro com allowlist de extensoes e mime types
 - armazenamento via disk configuravel do Laravel
 - listagem administrativa com metadados reutilizaveis
+- busca simples, filtro por tipo e acoes administrativas de replace/delete
+- bloqueio de exclusao quando o asset estiver em uso conhecido por featured image de `Pages` ou `Blog`
 - base pronta para uso futuro por plugins como `Pages` e `Blog`
 
 Na area de extensoes do admin, o core agora permite:

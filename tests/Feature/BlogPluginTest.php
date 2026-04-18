@@ -817,6 +817,76 @@ BLADE
             ->assertSee('Tags');
     }
 
+    public function test_admin_blog_index_supports_search_status_and_category_filters(): void
+    {
+        $category = Category::query()->create([
+            'name' => 'Releases',
+            'slug' => 'releases',
+        ]);
+
+        $otherCategory = Category::query()->create([
+            'name' => 'Stories',
+            'slug' => 'stories',
+        ]);
+
+        Post::query()->create([
+            'title' => 'Launch Notes',
+            'slug' => 'launch-notes',
+            'excerpt' => 'Release summary.',
+            'content' => 'Published release content.',
+            'status' => 'published',
+            'published_at' => now(),
+            'category_id' => $category->getKey(),
+        ]);
+
+        Post::query()->create([
+            'title' => 'Operator Story',
+            'slug' => 'operator-story',
+            'excerpt' => 'Story summary.',
+            'content' => 'Draft story content.',
+            'status' => 'draft',
+            'category_id' => $otherCategory->getKey(),
+        ]);
+
+        $user = $this->createUserWithPermissions([
+            'access_admin',
+            'view_dashboard',
+            'blog.view_posts',
+        ]);
+
+        $this->actingAs($user)
+            ->get($this->adminBlogIndexPath().'?search=launch&status=published&category='.$category->getKey())
+            ->assertOk()
+            ->assertSee('Launch Notes')
+            ->assertDontSee('Operator Story');
+    }
+
+    public function test_public_blog_index_supports_simple_search_only_for_published_posts(): void
+    {
+        Post::query()->create([
+            'title' => 'Launch Notes',
+            'slug' => 'launch-notes',
+            'excerpt' => 'Searchable public excerpt.',
+            'content' => 'Published launch content.',
+            'status' => 'published',
+            'published_at' => now(),
+        ]);
+
+        Post::query()->create([
+            'title' => 'Launch Draft',
+            'slug' => 'launch-draft',
+            'excerpt' => 'Draft excerpt.',
+            'content' => 'Draft launch content.',
+            'status' => 'draft',
+        ]);
+
+        $this->get('/blog?q=launch')
+            ->assertOk()
+            ->assertSee('Launch Notes')
+            ->assertSee('Showing public results for "launch". Draft posts never appear here.', false)
+            ->assertDontSee('Launch Draft');
+    }
+
     protected function bootBlogPlugin(): void
     {
         app(ExtensionRegistrySynchronizer::class)->sync();

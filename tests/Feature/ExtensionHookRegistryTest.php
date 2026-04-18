@@ -55,6 +55,8 @@ class ExtensionHookRegistryTest extends TestCase
             key: 'home-cta',
             slot: 'footer_cta',
             view: 'front.home',
+            themeView: 'plugins.reporting-suite.slots.home-cta',
+            dataResolver: fn (array $context): array => ['title' => 'Reporting'],
         ));
 
         $this->assertCount(1, $registry->adminNavigationItems());

@@ -97,6 +97,55 @@
             gap: 18px;
         }
 
+        .search-form {
+            display: grid;
+            gap: 12px;
+            margin: 0 0 28px;
+            padding: 18px;
+            border-radius: 22px;
+            border: 1px solid var(--panel-border);
+            background: rgba(15, 28, 51, 0.62);
+        }
+
+        .search-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .search-row input {
+            flex: 1 1 280px;
+            padding: 14px 16px;
+            border-radius: 16px;
+            border: 1px solid rgba(158, 176, 206, 0.16);
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text);
+        }
+
+        .search-row button,
+        .search-row a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 14px 18px;
+            border-radius: 999px;
+            border: 0;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .search-row button {
+            color: #03101f;
+            cursor: pointer;
+            background: linear-gradient(135deg, #33d1ff 0%, #8c63ff 100%);
+        }
+
+        .search-row a {
+            color: var(--text);
+            border: 1px solid rgba(158, 176, 206, 0.18);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
         .card {
             padding: 28px;
             border-radius: 24px;
@@ -128,6 +177,19 @@
             <h1>{{ $blogTitle }}</h1>
             <p class="subtle">{{ $blogIntro }}</p>
         </header>
+
+        <form method="GET" action="{{ url('/blog') }}" class="search-form">
+            <div class="search-row">
+                <input type="text" name="q" value="{{ $search ?? '' }}" placeholder="Search published posts by title, slug or excerpt">
+                <button type="submit">Search</button>
+                @if (! empty($search))
+                    <a href="{{ url('/blog') }}">Reset</a>
+                @endif
+            </div>
+            @if (! empty($search))
+                <p class="subtle">Showing public results for "{{ $search }}". Draft posts never appear here.</p>
+            @endif
+        </form>
 
         <section class="grid">
             @forelse ($posts as $post)

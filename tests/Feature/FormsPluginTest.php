@@ -14,13 +14,16 @@ use App\Core\Extensions\Models\ExtensionRecord;
 use App\Core\Extensions\Registry\ExtensionLifecycleStateManager;
 use App\Core\Extensions\Registry\ExtensionOperationalStateManager;
 use App\Core\Extensions\Registry\ExtensionRegistrySynchronizer;
+use App\Core\Extensions\Settings\PluginSettingsManager;
 use App\Core\Install\InstallationState;
 use App\Core\Settings\CoreSettingsManager;
 use App\Core\Settings\Enums\CoreSettingType;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
+use Plugins\Forms\Mail\FormSubmissionNotificationMail;
 use Plugins\Forms\Models\Form;
 use Plugins\Forms\Models\FormField;
 use Plugins\Forms\Models\FormSubmission;
@@ -116,6 +119,34 @@ class FormsPluginTest extends TestCase
         $this->actingAs($user)
             ->get($this->adminFormSubmissionsPath($form))
             ->assertForbidden();
+    }
+
+    public function test_forms_settings_route_requires_plugin_permission(): void
+    {
+        $extension = ExtensionRecord::query()->where('slug', 'forms')->firstOrFail();
+
+        $viewer = $this->createUserWithPermissions([
+            'access_admin',
+            'view_dashboard',
+            'view_extensions',
+        ]);
+
+        $this->actingAs($viewer)
+            ->get(route('admin.extensions.settings.edit', $extension))
+            ->assertForbidden();
+
+        $manager = $this->createUserWithPermissions([
+            'access_admin',
+            'view_dashboard',
+            'view_extensions',
+            'forms.manage_settings',
+        ]);
+
+        $this->actingAs($manager)
+            ->get(route('admin.extensions.settings.edit', $extension))
+            ->assertOk()
+            ->assertSee('Forms Settings')
+            ->assertSee('Recipient Email');
     }
 
     public function test_it_can_create_edit_publish_and_delete_forms_with_real_permissions(): void
@@ -269,6 +300,84 @@ class FormsPluginTest extends TestCase
         ]);
     }
 
+    public function test_public_submission_uses_plugin_success_message_when_form_does_not_define_one(): void
+    {
+        app(PluginSettingsManager::class)->update('forms', [
+            'success_message' => 'Settings driven success copy.',
+        ]);
+
+        $form = $this->createPublishedContactForm([
+            'success_message' => null,
+        ]);
+
+        $this->post('/forms/'.$form->slug, $this->validSubmissionPayload())
+            ->assertRedirect('/forms/'.$form->slug)
+            ->assertSessionHas('status', 'Settings driven success copy.');
+    }
+
+    public function test_public_submission_redirects_to_safe_configured_path(): void
+    {
+        app(PluginSettingsManager::class)->update('forms', [
+            'redirect_url' => '/thanks',
+        ]);
+
+        $form = $this->createPublishedContactForm();
+
+        $this->post('/forms/'.$form->slug, $this->validSubmissionPayload())
+            ->assertRedirect('/thanks')
+            ->assertSessionHas('status', 'Thanks for contacting our team.');
+    }
+
+    public function test_public_submission_ignores_unsafe_redirect_configuration(): void
+    {
+        app(PluginSettingsManager::class)->update('forms', [
+            'redirect_url' => 'https://malicious.example/leave',
+        ]);
+
+        $form = $this->createPublishedContactForm();
+
+        $this->post('/forms/'.$form->slug, $this->validSubmissionPayload())
+            ->assertRedirect('/forms/'.$form->slug)
+            ->assertSessionHas('status', 'Thanks for contacting our team.');
+    }
+
+    public function test_public_submission_sends_notification_when_enabled_and_configured(): void
+    {
+        Mail::fake();
+
+        app(PluginSettingsManager::class)->update('forms', [
+            'recipient_email' => 'forms@example.test',
+            'notifications_enabled' => true,
+        ]);
+
+        $form = $this->createPublishedContactForm();
+
+        $this->post('/forms/'.$form->slug, $this->validSubmissionPayload())
+            ->assertRedirect('/forms/'.$form->slug);
+
+        Mail::assertSent(FormSubmissionNotificationMail::class, function (FormSubmissionNotificationMail $mail) use ($form): bool {
+            return $mail->form->is($form)
+                && $mail->submission->values->contains('field_name', 'email_address');
+        });
+    }
+
+    public function test_public_submission_does_not_send_notification_when_disabled(): void
+    {
+        Mail::fake();
+
+        app(PluginSettingsManager::class)->update('forms', [
+            'recipient_email' => 'forms@example.test',
+            'notifications_enabled' => false,
+        ]);
+
+        $form = $this->createPublishedContactForm();
+
+        $this->post('/forms/'.$form->slug, $this->validSubmissionPayload())
+            ->assertRedirect('/forms/'.$form->slug);
+
+        Mail::assertNothingSent();
+    }
+
     public function test_invalid_public_submission_is_blocked(): void
     {
         $form = $this->createPublishedContactForm();
@@ -406,15 +515,15 @@ BLADE
         return $user;
     }
 
-    protected function createPublishedContactForm(): Form
+    protected function createPublishedContactForm(array $overrides = []): Form
     {
-        $form = Form::query()->create([
+        $form = Form::query()->create(array_merge([
             'title' => 'Contact Us',
             'slug' => 'contact-us',
             'description' => 'Simple public contact form.',
             'success_message' => 'Thanks for contacting our team.',
             'status' => 'published',
-        ]);
+        ], $overrides));
 
         $form->fields()->createMany([
             [
@@ -456,6 +565,20 @@ BLADE
         ]);
 
         return $form->fresh(['fields']);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function validSubmissionPayload(): array
+    {
+        return [
+            'full_name' => 'Jane Doe',
+            'email_address' => 'jane@example.test',
+            'message' => 'Hello from a valid submission.',
+            'department' => 'Sales',
+            'privacy_consent' => '1',
+        ];
     }
 
     protected function adminFormsIndexPath(): string

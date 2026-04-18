@@ -84,12 +84,15 @@ Com essa base, o sistema agora ja consegue evoluir para:
 
 Os plugins `Pages` e `Blog` ja demonstram essa evolucao nesta etapa sem introduzir framework magico de hooks.
 
-No frontend, o `Blog` ja demonstra a mesma ideia sem criar page builder:
+No frontend, o `Blog` e o `Forms` agora demonstram a mesma ideia sem criar page builder:
 
-- um slot `footer_cta` pequeno
-- um bloco simples publicado pelo provider do plugin
-- renderizacao pelo tema ativo quando a view `views/slots/footer_cta.blade.php` existir
-- fallback do core quando o tema nao declarar o slot explicitamente
+- o `Blog` publica um bloco rico de posts recentes em `sidebar`
+- o `Blog` preserva um CTA simples em `footer_cta`
+- o `Forms` publica um CTA simples e reutilizavel em `footer_cta`
+- o renderer resolve dados do bloco no backend quando necessario
+- o tema continua podendo sobrescrever o wrapper do slot
+- o tema tambem pode sobrescrever a view do bloco quando o contrato expuser um `themeView`
+- o core cai para fallback quando o tema nao declarar o slot ou o bloco explicitamente
 
 ## O que ainda nao existe
 

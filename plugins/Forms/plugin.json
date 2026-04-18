@@ -38,9 +38,51 @@
         {
             "slug": "view_form_submissions",
             "name": "View Form Submissions",
-            "description": "Permite consultar submissões persistidas dos formularios no admin do plugin Forms."
+            "description": "Permite consultar submissoes persistidas dos formularios no admin do plugin Forms."
+        },
+        {
+            "slug": "manage_settings",
+            "name": "Manage Forms Settings",
+            "description": "Permite governar os settings persistidos do plugin oficial Forms."
         }
     ],
+    "settings": {
+        "permission": "manage_settings",
+        "fields": [
+            {
+                "key": "recipient_email",
+                "label": "Recipient Email",
+                "description": "Email que recebe a notificacao simples de novas submissoes quando ela estiver habilitada.",
+                "type": "string",
+                "input": "email",
+                "default": ""
+            },
+            {
+                "key": "success_message",
+                "label": "Default Success Message",
+                "description": "Mensagem padrao exibida apos submissao quando o formulario nao declarar mensagem propria e nao houver redirect configurado.",
+                "type": "text",
+                "input": "textarea",
+                "default": "Your submission has been received successfully."
+            },
+            {
+                "key": "redirect_url",
+                "label": "Redirect URL",
+                "description": "Caminho interno opcional para redirecionar o visitante apos uma submissao bem-sucedida. Apenas paths locais iniciados por / sao aceitos nesta fase.",
+                "type": "string",
+                "input": "text",
+                "default": ""
+            },
+            {
+                "key": "notifications_enabled",
+                "label": "Notifications Enabled",
+                "description": "Quando habilitado, o plugin tenta enviar uma notificacao simples por email para novas submissoes.",
+                "type": "boolean",
+                "input": "checkbox",
+                "default": false
+            }
+        ]
+    },
     "core": {
         "min": "0.1.0"
     }

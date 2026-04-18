@@ -2,6 +2,8 @@
 
 namespace App\Core\Extensions\Hooks;
 
+use Closure;
+
 class ThemeSlotBlock
 {
     /**
@@ -14,6 +16,8 @@ class ThemeSlotBlock
         protected string $view,
         protected int $priority = 50,
         protected array $data = [],
+        protected ?string $themeView = null,
+        protected ?Closure $dataResolver = null,
     ) {
     }
 
@@ -48,6 +52,16 @@ class ThemeSlotBlock
     public function data(): array
     {
         return $this->data;
+    }
+
+    public function themeView(): ?string
+    {
+        return $this->themeView;
+    }
+
+    public function dataResolver(): ?Closure
+    {
+        return $this->dataResolver;
     }
 
     public function uniqueKey(): string

@@ -39,11 +39,11 @@ class PublicFormController extends Controller
             ->where('slug', $slug)
             ->firstOrFail();
 
-        $submissions->submit($form, $request);
+        $result = $submissions->submit($form, $request);
 
         return redirect()
-            ->to('/forms/'.$form->slug)
-            ->with('status', $form->success_message ?: 'Your submission has been received successfully.');
+            ->to($result->redirectUrl ?? '/forms/'.$form->slug)
+            ->with('status', $result->successMessage);
     }
 
     protected function resolveSeo(array $context): mixed

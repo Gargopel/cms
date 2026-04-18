@@ -56,12 +56,36 @@
                 <div class="stack">
                     <div class="notice">Sem editor de imagem, transformacoes avancadas, folders complexos ou integracoes externas nesta etapa.</div>
                     <div class="notice">A biblioteca foi desenhada para reutilizacao futura por plugins como Pages e Blog, sem acoplar o core a um DAM enterprise.</div>
+                    <div class="notice">Exclusao bloqueia assets em uso conhecido por featured image de Pages e Blog para evitar quebra operacional silenciosa.</div>
                 </div>
             </x-admin.glass-card>
         </div>
     </div>
 
     <x-admin.glass-card title="Media Library" subtitle="Arquivos persistidos pelo core com metadados basicos e reutilizaveis." style="margin-top: 20px;">
+        <form method="GET" action="{{ route('admin.media.index') }}" class="stack" style="margin-bottom: 18px;">
+            <div class="grid grid--two">
+                <div class="field">
+                    <label for="search">Search</label>
+                    <input id="search" name="search" type="text" value="{{ $filters['search'] }}" placeholder="Search by file name, path or mime type">
+                </div>
+
+                <div class="field">
+                    <label for="kind">Type</label>
+                    <select id="kind" name="kind">
+                        <option value="all" @selected($filters['kind'] === 'all')>All assets</option>
+                        <option value="images" @selected($filters['kind'] === 'images')>Images only</option>
+                        <option value="files" @selected($filters['kind'] === 'files')>Non-image files</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="actions-row">
+                <button type="submit" class="admin-button admin-button--secondary">Apply Filters</button>
+                <a href="{{ route('admin.media.index') }}" class="admin-button admin-button--ghost">Reset</a>
+            </div>
+        </form>
+
         <div class="table-shell">
             <table>
                 <thead>
@@ -71,15 +95,27 @@
                         <th>Size</th>
                         <th>Uploader</th>
                         <th>Stored Path</th>
+                        <th>Usage</th>
                         <th>Uploaded</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse ($assets as $asset)
+                        @php
+                            $usageSummary = $asset->usage_summary ?? [];
+                        @endphp
                         <tr>
                             <td>
+                                @if ($asset->isImage() && $asset->url())
+                                    <div style="margin-bottom: 10px;">
+                                        <img src="{{ $asset->url() }}" alt="{{ $asset->original_name }}" style="width: 88px; height: 64px; object-fit: cover; border-radius: 14px; border: 1px solid rgba(148, 170, 226, 0.18);">
+                                    </div>
+                                @endif
+
                                 <strong>{{ $asset->original_name }}</strong><br>
                                 <span class="subtle">{{ $asset->extension ?: 'no extension' }}</span>
+
                                 @if ($asset->url())
                                     <br><a href="{{ $asset->url() }}" class="stat-note" target="_blank" rel="noopener">Open asset</a>
                                 @endif
@@ -88,12 +124,41 @@
                             <td>{{ $asset->humanSize() }}</td>
                             <td>{{ $asset->uploader?->name ?? 'system' }}</td>
                             <td><code>{{ $asset->path }}</code></td>
+                            <td>
+                                @if ($usageSummary !== [])
+                                    <span class="status-badge status-badge--warning">In use</span>
+                                    <div class="subtle" style="margin-top: 8px;">
+                                        {{ implode(' | ', $usageSummary) }}
+                                    </div>
+                                @else
+                                    <span class="status-badge status-badge--success">Unused</span>
+                                @endif
+                            </td>
                             <td>{{ $asset->created_at?->format('Y-m-d H:i') ?? 'n/a' }}</td>
+                            <td>
+                                @if ($canManageMedia)
+                                    <div class="stack">
+                                        <form method="POST" action="{{ route('admin.media.replace', $asset) }}" enctype="multipart/form-data" class="stack">
+                                            @csrf
+                                            <input name="file" type="file" required>
+                                            <button type="submit" class="admin-button admin-button--secondary">Replace</button>
+                                        </form>
+
+                                        <form method="POST" action="{{ route('admin.media.destroy', $asset) }}">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="admin-button admin-button--ghost">Delete</button>
+                                        </form>
+                                    </div>
+                                @else
+                                    <span class="subtle">Read only</span>
+                                @endif
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6">
-                                <div class="empty-state">Nenhum arquivo enviado ainda para a biblioteca de mídia do core.</div>
+                            <td colspan="8">
+                                <div class="empty-state">Nenhum arquivo enviado ainda para a biblioteca de midia do core.</div>
                             </td>
                         </tr>
                     @endforelse

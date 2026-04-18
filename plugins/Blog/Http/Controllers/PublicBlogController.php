@@ -5,6 +5,7 @@ namespace Plugins\Blog\Http\Controllers;
 use App\Core\Extensions\Settings\PluginSettingsManager;
 use App\Core\Themes\ThemeViewResolver;
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Plugins\Blog\Models\Category;
 use Plugins\Blog\Models\Post;
@@ -12,26 +13,40 @@ use Plugins\Blog\Models\Tag;
 
 class PublicBlogController extends Controller
 {
-    public function index(ThemeViewResolver $themes, PluginSettingsManager $pluginSettings): View
+    public function index(Request $request, ThemeViewResolver $themes, PluginSettingsManager $pluginSettings): View
     {
         $blogTitle = (string) $pluginSettings->get('blog', 'blog_title', 'Blog');
         $blogIntro = (string) $pluginSettings->get('blog', 'blog_intro', 'Listagem publica editorial do plugin oficial Blog.');
         $showExcerpts = (bool) $pluginSettings->get('blog', 'show_excerpts', true);
+        $search = trim((string) $request->query('q', ''));
+
+        $posts = Post::query()
+            ->with(['featuredImage', 'category', 'tags'])
+            ->published()
+            ->when($search !== '', function ($query) use ($search): void {
+                $query->where(function ($inner) use ($search): void {
+                    $inner->where('title', 'like', '%'.$search.'%')
+                        ->orWhere('slug', 'like', '%'.$search.'%')
+                        ->orWhere('excerpt', 'like', '%'.$search.'%');
+                });
+            })
+            ->orderByDesc('published_at')
+            ->orderByDesc('updated_at')
+            ->paginate(12)
+            ->withQueryString();
 
         return view($themes->resolve('plugins.blog.index', 'blog::front.index'), [
-            'posts' => Post::query()
-                ->with(['featuredImage', 'category', 'tags'])
-                ->published()
-                ->orderByDesc('published_at')
-                ->orderByDesc('updated_at')
-                ->paginate(12),
+            'posts' => $posts,
             'blogTitle' => $blogTitle,
-            'blogIntro' => $blogIntro,
+            'blogIntro' => $search !== ''
+                ? 'Busca publica simples em posts publicados do plugin oficial Blog.'
+                : $blogIntro,
             'showExcerpts' => $showExcerpts,
+            'search' => $search,
             'seo' => $this->resolveSeo([
-                'title' => $blogTitle,
-                'description' => $blogIntro,
-                'canonical' => url('/blog'),
+                'title' => $search !== '' ? 'Search: '.$search : $blogTitle,
+                'description' => $search !== '' ? 'Resultados publicos de busca para o blog.' : $blogIntro,
+                'canonical' => $search !== '' ? url('/blog?q='.urlencode($search)) : url('/blog'),
                 'og_type' => 'website',
             ]),
         ]);

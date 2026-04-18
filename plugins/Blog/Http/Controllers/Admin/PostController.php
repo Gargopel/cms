@@ -4,6 +4,7 @@ namespace Plugins\Blog\Http\Controllers\Admin;
 
 use App\Core\Media\Models\MediaAsset;
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Plugins\Blog\Enums\PostStatus;
@@ -15,21 +16,47 @@ use Plugins\Blog\Models\Tag;
 
 class PostController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
+        $search = trim((string) $request->query('search', ''));
+        $status = trim((string) $request->query('status', 'all'));
+        $category = (int) $request->query('category', 0);
+
+        $posts = Post::query()
+            ->with(['category', 'tags'])
+            ->when($search !== '', function ($query) use ($search): void {
+                $query->where(function ($inner) use ($search): void {
+                    $inner->where('title', 'like', '%'.$search.'%')
+                        ->orWhere('slug', 'like', '%'.$search.'%');
+                });
+            })
+            ->when(in_array($status, [PostStatus::Draft->value, PostStatus::Published->value], true), function ($query) use ($status): void {
+                $query->where('status', $status);
+            })
+            ->when($category > 0, function ($query) use ($category): void {
+                $query->where('category_id', $category);
+            })
+            ->orderByRaw("CASE WHEN status = ? THEN 0 ELSE 1 END", [PostStatus::Published->value])
+            ->orderByDesc('published_at')
+            ->orderByDesc('updated_at')
+            ->paginate(20)
+            ->withQueryString();
+
         return view('blog::admin.index', [
             'pageTitle' => 'Blog',
             'pageSubtitle' => 'Plugin oficial editorial para posts simples, publicados com controle operacional e RBAC real.',
-            'posts' => Post::query()
-                ->with(['category', 'tags'])
-                ->orderByDesc('published_at')
-                ->orderByDesc('updated_at')
-                ->paginate(20),
+            'posts' => $posts,
             'summary' => [
                 'total' => Post::query()->count(),
                 'draft' => Post::query()->where('status', PostStatus::Draft->value)->count(),
                 'published' => Post::query()->where('status', PostStatus::Published->value)->count(),
             ],
+            'filters' => [
+                'search' => $search,
+                'status' => in_array($status, ['all', PostStatus::Draft->value, PostStatus::Published->value], true) ? $status : 'all',
+                'category' => $category,
+            ],
+            'categoryOptions' => $this->categoryOptions(),
         ]);
     }
 

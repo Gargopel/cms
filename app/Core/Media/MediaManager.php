@@ -9,6 +9,11 @@ use Illuminate\Support\Str;
 
 class MediaManager
 {
+    public function __construct(
+        protected MediaUsageInspector $usageInspector,
+    ) {
+    }
+
     public function disk(): string
     {
         return (string) config('platform.media.disk', 'public');
@@ -96,6 +101,86 @@ class MediaManager
             success: true,
             message: 'Media asset uploaded successfully.',
             asset: $asset,
+        );
+    }
+
+    public function replace(MediaAsset $asset, UploadedFile $file): MediaActionResult
+    {
+        $extension = strtolower((string) $file->getClientOriginalExtension());
+        $originalName = trim((string) $file->getClientOriginalName());
+        $mimeType = (string) $file->getClientMimeType();
+
+        if (! in_array($extension, $this->allowedExtensions(), true)) {
+            return new MediaActionResult(
+                success: false,
+                message: 'This file extension is not allowed for the current media policy.',
+                asset: $asset,
+            );
+        }
+
+        if (! in_array($mimeType, $this->allowedMimeTypes(), true)) {
+            return new MediaActionResult(
+                success: false,
+                message: 'This file mime type is not allowed for the current media policy.',
+                asset: $asset,
+            );
+        }
+
+        $directory = trim(pathinfo($asset->path, PATHINFO_DIRNAME), '/.');
+        $directory = $directory !== '' ? $directory : $this->directory().'/'.now()->format('Y/m');
+        $storedName = Str::uuid()->toString().($extension !== '' ? '.'.$extension : '');
+        $newPath = trim($directory.'/'.$storedName, '/');
+        $oldPath = $asset->path;
+
+        Storage::disk($asset->disk)->putFileAs(
+            $directory,
+            $file,
+            $storedName,
+            ['visibility' => 'public'],
+        );
+
+        if ($oldPath !== '' && $oldPath !== $newPath) {
+            Storage::disk($asset->disk)->delete($oldPath);
+        }
+
+        $asset->forceFill([
+            'original_name' => $originalName !== '' ? $originalName : $storedName,
+            'stored_name' => $storedName,
+            'path' => $newPath,
+            'mime_type' => $mimeType,
+            'size_bytes' => (int) $file->getSize(),
+            'extension' => $extension,
+        ])->save();
+
+        return new MediaActionResult(
+            success: true,
+            message: 'Media asset replaced successfully.',
+            asset: $asset->fresh(),
+        );
+    }
+
+    public function delete(MediaAsset $asset): MediaActionResult
+    {
+        $reasons = $this->usageInspector->usageSummaryFor($asset);
+
+        if ($reasons !== []) {
+            return new MediaActionResult(
+                success: false,
+                message: 'Media asset cannot be deleted while it is still referenced by known content.',
+                asset: $asset,
+                reasons: $reasons,
+            );
+        }
+
+        if ($asset->path !== '') {
+            Storage::disk($asset->disk)->delete($asset->path);
+        }
+
+        $asset->delete();
+
+        return new MediaActionResult(
+            success: true,
+            message: 'Media asset deleted successfully.',
         );
     }
 }

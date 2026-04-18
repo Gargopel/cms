@@ -91,6 +91,14 @@ Route::post('/media', [AdminMediaController::class, 'store'])
     ->middleware('can:'.CorePermission::UploadMedia->value)
     ->name('media.store');
 
+Route::post('/media/{asset}/replace', [AdminMediaController::class, 'replace'])
+    ->middleware('can:'.CorePermission::ManageMedia->value)
+    ->name('media.replace');
+
+Route::delete('/media/{asset}', [AdminMediaController::class, 'destroy'])
+    ->middleware('can:'.CorePermission::ManageMedia->value)
+    ->name('media.destroy');
+
 Route::prefix('/users')
     ->middleware('can:'.CorePermission::ManageUsers->value)
     ->as('users.')

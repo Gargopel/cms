@@ -50,6 +50,8 @@ Existe agora uma base administrativa funcional do core em Blade, mas ainda nao e
 - `GET /admin/extensions/{extension}/settings`
 - `GET /admin/media`
 - `POST /admin/media`
+- `POST /admin/media/{asset}/replace`
+- `DELETE /admin/media/{asset}`
 - `GET /admin/audit`
 - `GET /admin/health`
 - `GET /admin/pages`
@@ -188,6 +190,7 @@ Esse comportamento e controlado por configuracao e nao deve ser tratado como flu
 - quem nao possui `manage_settings` nao consegue alterar configuracoes globais do core
 - quem nao possui `view_media` nao consegue consultar a biblioteca de mídia
 - quem nao possui `upload_media` nao consegue enviar arquivos ao media manager
+- quem nao possui `manage_media` nao consegue substituir nem excluir assets da biblioteca
 - quem nao possui a permissao declarada pelo plugin nao consegue acessar nem alterar os settings desse plugin
 - quem nao possui `view_audit_logs` nao consegue consultar a trilha administrativa do sistema
 - quem nao possui `view_system_health` nao consegue consultar a area de diagnostico do sistema
@@ -342,6 +345,12 @@ Nesta etapa:
 
 - listagem server-rendered da biblioteca de mídia do core
 - upload seguro com allowlist de extensões e mime types
+- busca simples por nome, path e mime type
+- filtro simples para imagens ou arquivos nao-imagem
+- substituicao simples de arquivo existente com validacao segura
+- exclusao administrativa de asset nao referenciado
+- bloqueio de exclusao quando o asset estiver em uso conhecido por featured image de `Pages` ou `Blog`
+- auditoria de upload, substituicao, exclusao e bloqueios relevantes
 - persistência de nome original, caminho armazenado, mime type, tamanho, extensão e usuário que enviou
 - base reutilizável para plugins futuros sem acoplamento profundo nesta fase
 - auditoria administrativa para uploads bem-sucedidos

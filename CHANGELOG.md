@@ -112,6 +112,8 @@ O formato segue uma convencao inspirada em Keep a Changelog, com foco em clareza
 - testes automatizados de catalogo, persistencia, permissao e auditoria de settings por plugin
 - primeira camada real de media manager do core com persistencia propria, upload seguro e listagem administrativa
 - permissoes `view_media`, `upload_media` e `manage_media` para governanca incremental da biblioteca de mídia
+- media manager do core agora suporta exclusao segura, substituicao simples de arquivo, busca administrativa e filtro basico por tipo
+- exclusao de midia agora e bloqueada quando o asset estiver em uso conhecido por featured image de `Pages` ou `Blog`
 - testes automatizados cobrindo upload valido, bloqueio de upload invalido, persistencia, autenticacao e autorizacao da area de mídia
 - integracao real do media manager do core com os plugins oficiais `Pages` e `Blog` por imagem destacada opcional
 - validacao segura para referencias de midia inexistentes ou nao-imagem em `Pages` e `Blog`
@@ -123,18 +125,28 @@ O formato segue uma convencao inspirada em Keep a Changelog, com foco em clareza
 - tags editoriais simples no plugin oficial `Blog`, com CRUD administrativo minimo e associacao multipla por pivot propria
 - rota publica `/blog/tag/{slug}` com listagem apenas de posts publicados da tag selecionada
 - testes automatizados cobrindo CRUD de tags, associacao ao post, permissao e fallback por tema na listagem por tag
+- plugin `Blog` agora suporta busca administrativa simples por titulo/slug, filtros por status e categoria e uma listagem operacional mais util no admin
+- plugin `Blog` agora suporta busca publica leve em `/blog?q=...`, limitada a posts publicados e sem full text complexo
 - terceiro plugin oficial real do ecossistema em `plugins/Seo`
 - plugin Seo com settings globais enxutos, resolvedor simples de metadados e renderizacao de metatags no frontend de `Pages` e `Blog`
+- sitemap XML publico simples em `/sitemap.xml` dentro do plugin oficial `Seo`, incluindo home, paginas publicadas de `Pages`, posts publicados de `Blog` e listagens publicas de categoria e tag elegiveis
 - testes automatizados cobrindo defaults, permissao para settings, integracao com `Pages`, integracao com `Blog` e compatibilidade com tema ativo
+- testes automatizados cobrindo geracao do sitemap, ausencia de drafts e omissao segura de conteudo quando `Pages` ou `Blog` nao estiverem elegiveis
 - primeira camada real de theme slots/regioes de layout com contrato explicito, renderer previsivel e fallback seguro no frontend
 - suporte inicial a slots `hero`, `sidebar` e `footer_cta`
 - contribuicoes simples de plugins elegiveis para slots do tema via registry central de hooks
 - integracao oficial inicial do plugin `Blog` com um bloco simples em `footer_cta`
 - testes automatizados cobrindo registro de contribuicoes, elegibilidade operacional e renderizacao de slots com tema ativo
+- theme slots agora suportam blocos mais ricos com dados resolvidos no backend e override opcional da view do bloco pelo tema ativo
+- plugin `Blog` agora publica um bloco rico de posts recentes em `sidebar`
+- plugin `Forms` agora publica um CTA reutilizavel em `footer_cta`
+- testes automatizados cobrindo renderizacao de blocos ricos, fallback seguro e override de bloco pelo tema
 - quarto plugin oficial real do ecossistema em `plugins/Forms`
 - plugin Forms com manifesto completo, permissoes proprias, hooks administrativos, rotas proprias, persistencia de formularios, campos, submissões e valores de submissao
 - renderizacao publica simples de formularios publicados com fallback por tema e submissao persistida
+- plugin Forms agora usa settings por plugin para notificacao simples por email, mensagem de sucesso global e redirect local seguro pos-envio
 - testes automatizados cobrindo CRUD de formularios, campos, submissões publicas, restricao por permissao e compatibilidade com tema ativo
+- testes automatizados cobrindo settings do Forms, notificacao simples, redirect seguro e comportamento pos-envio configuravel
 
 ### Changed
 - `README.md` reescrito para refletir a proposta plugin-first

@@ -2,18 +2,27 @@
 
 namespace Plugins\Forms\Support;
 
+use App\Core\Extensions\Settings\PluginSettingsManager;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Plugins\Forms\Enums\FormFieldType;
+use Plugins\Forms\Mail\FormSubmissionNotificationMail;
 use Plugins\Forms\Models\Form;
 use Plugins\Forms\Models\FormField;
 use Plugins\Forms\Models\FormSubmission;
+use Throwable;
 
 class FormSubmissionService
 {
-    public function submit(Form $form, Request $request): FormSubmission
+    public function __construct(
+        protected PluginSettingsManager $pluginSettings,
+    ) {
+    }
+
+    public function submit(Form $form, Request $request): FormSubmissionResult
     {
         $fields = $form->fields()->ordered()->get();
 
@@ -24,7 +33,7 @@ class FormSubmissionService
             $this->attributesFor($fields->all()),
         )->validate();
 
-        return DB::transaction(function () use ($form, $fields, $validated, $request): FormSubmission {
+        $submission = DB::transaction(function () use ($form, $fields, $validated, $request): FormSubmission {
             $submission = $form->submissions()->create([
                 'submitted_at' => Carbon::now(),
                 'ip_address' => $request->ip(),
@@ -42,6 +51,13 @@ class FormSubmissionService
 
             return $submission->load('values.field');
         });
+
+        return new FormSubmissionResult(
+            submission: $submission,
+            successMessage: $this->successMessageFor($form),
+            redirectUrl: $this->resolvedRedirectUrl(),
+            notificationSent: $this->sendNotificationIfConfigured($form, $submission),
+        );
     }
 
     /**
@@ -103,5 +119,73 @@ class FormSubmissionService
         }
 
         return mb_substr(trim($userAgent), 0, 500);
+    }
+
+    protected function sendNotificationIfConfigured(Form $form, FormSubmission $submission): bool
+    {
+        if (! $this->notificationsEnabled()) {
+            return false;
+        }
+
+        $recipient = $this->configuredRecipientEmail();
+
+        if ($recipient === null) {
+            return false;
+        }
+
+        try {
+            Mail::to($recipient)->send(new FormSubmissionNotificationMail($form, $submission));
+
+            return true;
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return false;
+        }
+    }
+
+    protected function notificationsEnabled(): bool
+    {
+        return (bool) $this->pluginSettings->get('forms', 'notifications_enabled', false);
+    }
+
+    protected function configuredRecipientEmail(): ?string
+    {
+        $value = $this->stringOrNull($this->pluginSettings->get('forms', 'recipient_email'));
+
+        if ($value === null || filter_var($value, FILTER_VALIDATE_EMAIL) === false) {
+            return null;
+        }
+
+        return $value;
+    }
+
+    protected function successMessageFor(Form $form): string
+    {
+        return $this->stringOrNull($form->success_message)
+            ?? $this->stringOrNull($this->pluginSettings->get('forms', 'success_message'))
+            ?? 'Your submission has been received successfully.';
+    }
+
+    protected function resolvedRedirectUrl(): ?string
+    {
+        $redirect = $this->stringOrNull($this->pluginSettings->get('forms', 'redirect_url'));
+
+        if ($redirect === null) {
+            return null;
+        }
+
+        return str_starts_with($redirect, '/') ? $redirect : null;
+    }
+
+    protected function stringOrNull(mixed $value): ?string
+    {
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $trimmed = trim($value);
+
+        return $trimmed === '' ? null : $trimmed;
     }
 }

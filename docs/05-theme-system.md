@@ -139,7 +139,8 @@ Regras atuais:
 - o core resolve o slot e aplica o fallback de renderizacao
 - o tema continua responsavel pela apresentacao final
 - plugins so podem contribuir quando estiverem `valid`, `installed` e `enabled`
-- contribuicoes sao blocos simples, com `slot`, `view`, `priority` e `plugin_slug`
+- contribuicoes sao blocos explicitos, com `slot`, `view`, `priority`, `plugin_slug` e override opcional de view pelo tema
+- um bloco tambem pode resolver dados no backend antes da renderizacao, sem empurrar query para Blade
 - nao existe editor visual, drag-and-drop ou nesting complexo
 
 Como um tema pode suportar um slot explicitamente:
@@ -152,20 +153,31 @@ Quando a view do slot nao existe no tema ativo:
 
 - o core usa o fallback `resources/views/front/slots/default.blade.php`
 
+Quando o tema quiser sobrescrever a view de um bloco especifico:
+
+- o bloco pode expor um `themeView` explicito
+- o tema cria a view correspondente em `themes/<Theme>/views/plugins/<plugin>/slots/<block>.blade.php`
+- se essa view nao existir, o core volta para a view original do plugin
+
 Quando nao ha contribuicoes registradas para o slot:
 
 - a renderizacao retorna vazia
 - o frontend continua funcionando sem placeholder artificial
 
-## Integracao oficial inicial
+## Integracao oficial atual
 
-O plugin oficial `Blog` agora publica uma contribuicao simples para o slot `footer_cta` da home.
+O frontend inicial agora possui dois exemplos oficiais mais uteis de blocos publicados por plugins:
 
-Objetivo desta contribuicao:
+- `Blog` publica um bloco rico de posts recentes no slot `sidebar`
+- `Forms` publica um CTA simples e reutilizavel no slot `footer_cta`
 
-- provar a cadeia completa de hook frontend
-- manter o exemplo pequeno e util
-- preparar terreno para blocos mais ricos sem virar page builder
+O plugin `Blog` tambem preserva o bloco simples inicial de `footer_cta` como exemplo pequeno de contribuicao estavel.
+
+Objetivo dessas contribuicoes:
+
+- provar a cadeia completa de hook frontend com dados resolvidos no backend
+- manter o exemplo pequeno e realmente util para sites institucionais
+- preparar terreno para widgets mais ricos sem virar page builder
 
 ## Regras de seguranca atuais
 

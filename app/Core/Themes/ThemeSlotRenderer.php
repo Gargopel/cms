@@ -108,12 +108,22 @@ class ThemeSlotRenderer
      */
     protected function renderBlock(ThemeSlotBlock $block, string $slot, array $context): ?string
     {
-        if (! $this->viewFactory->exists($block->view())) {
+        $view = $block->themeView() !== null
+            ? $this->views->resolve($block->themeView(), $block->view())
+            : $block->view();
+
+        if (! $this->viewFactory->exists($view)) {
             return null;
         }
 
         try {
-            return $this->viewFactory->make($block->view(), array_merge($context, $block->data(), [
+            $data = $this->resolveBlockData($block, $context);
+
+            if ($data === null) {
+                return null;
+            }
+
+            return $this->viewFactory->make($view, array_merge($context, $data, [
                 'slot' => $slot,
                 'block' => $block,
             ]))->render();
@@ -122,5 +132,27 @@ class ThemeSlotRenderer
 
             return null;
         }
+    }
+
+    /**
+     * @param  array<string, mixed>  $context
+     * @return array<string, mixed>|null
+     */
+    protected function resolveBlockData(ThemeSlotBlock $block, array $context): ?array
+    {
+        $data = $block->data();
+        $resolver = $block->dataResolver();
+
+        if ($resolver === null) {
+            return $data;
+        }
+
+        $resolved = $resolver($context);
+
+        if ($resolved === null) {
+            return null;
+        }
+
+        return array_merge($data, $resolved);
     }
 }

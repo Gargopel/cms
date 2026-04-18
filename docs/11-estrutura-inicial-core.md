@@ -12,7 +12,7 @@ Registrar de forma curta como a fundacao atual organiza responsabilidades.
 - `app/Core/Audit`: modelagem e servico central de logs e auditoria administrativa
 - `app/Core/Health`: contratos, checks e agregacao de diagnostico do sistema
 - `app/Core/Install`: estado de instalacao, setup guiado, middlewares e servicos do instalador web
-- `app/Core/Media`: modelagem, upload e persistencia reutilizavel da biblioteca de mídia do core
+- `app/Core/Media`: modelagem, upload, substituicao, exclusao segura e persistencia reutilizavel da biblioteca de midia do core
 - `app/Core/Settings`: catalogo, modelagem, persistencia e leitura centralizada de settings globais do core
 - `app/Core/Themes`: tema ativo, resolucao de views do frontend, slots de layout e contrato inicial do theme manager
 - `app/Core/Extensions/Capabilities`: catalogo, normalizacao observavel e consulta de capabilities declaradas
@@ -41,9 +41,12 @@ Referencia oficial atual do ecossistema:
 - `plugins/Pages` e `plugins/Blog`: agora tambem demonstram consumo real do media manager do core por referencia opcional de imagem destacada
 - `plugins/Blog`: agora tambem demonstra uma evolucao editorial simples com categorias proprias e listagem publica por categoria
 - `plugins/Blog`: agora tambem demonstra tags editoriais com pivot propria e listagem publica por tag
+- `plugins/Blog`: agora tambem demonstra busca administrativa simples, filtros editoriais uteis e busca publica leve sem full text complexo
 - `plugins/Blog`: agora tambem demonstra uma contribuicao simples para slot de tema no frontend inicial
-- `plugins/Seo`: terceiro plugin oficial real, usado como exemplo de integracao leve de metadados SEO com settings por plugin e renderizacao publica previsivel
-- `plugins/Forms`: quarto plugin oficial real, usado como exemplo de interacao publica com formularios, campos estruturados e submissões persistidas
+- `plugins/Blog`: agora tambem demonstra um bloco rico de posts recentes em slot de tema com override opcional por tema
+- `plugins/Seo`: terceiro plugin oficial real, usado como exemplo de integracao leve de metadados SEO, settings por plugin, sitemap XML simples e renderizacao publica previsivel
+- `plugins/Forms`: quarto plugin oficial real, usado como exemplo de interacao publica com formularios, campos estruturados, settings proprios e submissoes persistidas
+- `plugins/Forms`: agora tambem demonstra CTA reutilizavel de frontend em slot de tema com dados resolvidos pelo plugin
 
 ## Responsabilidades do core nesta fase
 
@@ -61,7 +64,7 @@ Referencia oficial atual do ecossistema:
 - detectar pendencias de migration por plugin elegivel
 - executar migrations pendentes de plugin de forma segura e auditavel pelo admin
 - aceitar contribuicoes administrativas de plugins validos, instalados e habilitados em superficies controladas
-- aceitar contribuicoes de plugins elegiveis em slots pequenos e previsiveis do frontend inicial
+- aceitar contribuicoes de plugins elegiveis em slots pequenos e previsiveis do frontend inicial, incluindo blocos com dados resolvidos no backend e override opcional por tema
 - persistir o registro das extensoes sincronizadas
 - manter o estado operacional separado do discovery bruto
 - manter o lifecycle administrativo separado do discovery e do estado operacional
@@ -76,6 +79,7 @@ Referencia oficial atual do ecossistema:
 - persistir e aplicar settings globais minimos do core com leitura centralizada
 - persistir o tema ativo e resolver fallback seguro de views publicas
 - renderizar slots de tema com fallback seguro quando o tema nao fornecer wrapper proprio
+- resolver override opcional da view de um bloco quando o tema ativo declarar template especifico para esse bloco
 - registrar acoes administrativas sensiveis com contexto basico para consulta operacional
 - executar health checks basicos com retorno estruturado para diagnostico administrativo
 - permitir instalacao web guiada antes do primeiro acesso ao admin
@@ -90,13 +94,13 @@ Referencia oficial atual do ecossistema:
 - `app/Core/Auth/Models`: role e permission do core
 - `app/Core/Auth/Support`: sincronizacao inicial de permissions e regras de governanca de seguranca
 - `app/Core/Audit`: log de eventos auditaveis, ator, alvo, metadados simples e contexto da requisicao
-- `app/Core/Media`: service central para upload seguro, policy minima de arquivos suportados e modelagem de `media_assets`
+- `app/Core/Media`: services centrais para upload seguro, substituicao, exclusao bloqueada quando em uso conhecido, inspecao de referencias e modelagem de `media_assets`
 - `app/Core/Extensions/Registry`: sincronizacao manual e mudanca segura de estado operacional reutilizadas pelo admin
 - `app/Core/Extensions/Registry`: sincronizacao manual, lifecycle administrativo e mudanca segura de estado operacional reutilizadas pelo admin
 - `app/Core/Extensions/Dependencies`: leitura centralizada de dependencias declaradas, faltantes, desabilitadas e dependentes ativos
 - `app/Core/Extensions/Capabilities`: service para capabilities reconhecidas, custom e consultas por capability
 - `app/Core/Extensions/Health`: relatorio agregado por extensao e visao sistemica do ecossistema
-- `app/Core/Extensions/Hooks`: registro central de menu admin, paineis simples de dashboard e blocos simples de slots de tema vindos de plugins elegiveis
+- `app/Core/Extensions/Hooks`: registro central de menu admin, paineis simples de dashboard e blocos de slots de tema vindos de plugins elegiveis
 - `app/Core/Extensions/Migrations`: leitura de diretorio `database/migrations`, deteccao de pendencias e execucao segura via admin
 - `app/Core/Extensions/Permissions`: definicoes de permissao por plugin e sincronizacao incremental com a tabela `permissions`
 - `app/Core/Extensions/Settings`: service central para catalogo, fallback, validacao simples e persistencia de settings por plugin
@@ -128,6 +132,7 @@ Recorte importante fora do core, mas ja integrante da arquitetura:
 - `plugins/Blog/resources/views/admin`: telas Blade do plugin oficial Blog
 - `plugins/Blog/resources/views/front`: fallback publico do plugin oficial Blog
 - `plugins/Blog/resources/views/slots`: blocos simples publicados pelo plugin oficial Blog para slots do tema
+- `plugins/Forms/resources/views/slots`: blocos simples publicados pelo plugin oficial Forms para slots do tema
 - `plugins/Blog/routes`: rotas administrativas e publicas do plugin oficial
 - `plugins/Blog/database/migrations`: persistencia propria do plugin oficial Blog
 - `plugins/Forms/resources/views/admin`: telas Blade do plugin oficial Forms

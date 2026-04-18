@@ -7,12 +7,15 @@ use App\Core\Extensions\Enums\ExtensionDiscoveryStatus;
 use App\Core\Extensions\Enums\ExtensionLifecycleStatus;
 use App\Core\Extensions\Enums\ExtensionOperationalStatus;
 use App\Core\Extensions\Enums\ExtensionType;
+use App\Core\Extensions\Migrations\PluginMigrationService;
 use App\Core\Extensions\Models\ExtensionRecord;
 use App\Core\Settings\CoreSettingsManager;
 use App\Core\Themes\ThemeViewResolver;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
+use Plugins\Blog\Models\Post;
+use Plugins\Forms\Models\Form;
 use Tests\TestCase;
 
 class ThemeFrontendRenderingTest extends TestCase
@@ -128,17 +131,51 @@ class ThemeFrontendRenderingTest extends TestCase
         $response->assertSee('Core Frontend Fallback');
     }
 
-    public function test_home_renders_footer_cta_slot_from_enabled_plugin_contribution(): void
+    public function test_home_renders_rich_blog_sidebar_slot_from_enabled_plugin_contribution(): void
     {
-        $this->createBlogPluginRecord(ExtensionOperationalStatus::Enabled);
+        $record = $this->createBlogPluginRecord(ExtensionOperationalStatus::Enabled);
+        app(PluginMigrationService::class)->runPendingFor($record);
+
+        Post::query()->create([
+            'title' => 'Launch Story',
+            'slug' => 'launch-story',
+            'excerpt' => 'Recent post excerpt.',
+            'content' => 'Recent post content.',
+            'status' => 'published',
+            'published_at' => now(),
+        ]);
 
         app(PluginProviderBootstrapper::class)->bootstrap();
 
         $response = $this->get(route('home'));
 
         $response->assertOk();
-        $response->assertSee('Blog Plugin Slot');
-        $response->assertSee('Explorar Blog');
+        $response->assertSee('Recent Blog Posts');
+        $response->assertSee('Launch Story');
+        $response->assertSee('Browse all posts');
+    }
+
+    public function test_home_renders_forms_cta_slot_from_enabled_plugin_contribution(): void
+    {
+        $record = $this->createFormsPluginRecord(ExtensionOperationalStatus::Enabled);
+        app(PluginMigrationService::class)->runPendingFor($record);
+
+        Form::query()->create([
+            'title' => 'Talk To Sales',
+            'slug' => 'talk-to-sales',
+            'description' => 'Simple lead capture for teams evaluating the platform.',
+            'success_message' => 'Thanks for reaching out.',
+            'status' => 'published',
+        ]);
+
+        app(PluginProviderBootstrapper::class)->bootstrap();
+
+        $response = $this->get(route('home'));
+
+        $response->assertOk();
+        $response->assertSee('Forms Plugin Slot');
+        $response->assertSee('Talk To Sales');
+        $response->assertSee('Open Form');
     }
 
     public function test_home_does_not_render_slot_contributions_from_disabled_plugin(): void
@@ -150,8 +187,8 @@ class ThemeFrontendRenderingTest extends TestCase
         $response = $this->get(route('home'));
 
         $response->assertOk();
-        $response->assertDontSee('Blog Plugin Slot');
-        $response->assertDontSee('Explorar Blog');
+        $response->assertDontSee('Recent Blog Posts');
+        $response->assertDontSee('Browse all posts');
     }
 
     public function test_theme_specific_slot_template_wraps_plugin_contribution_when_supported(): void
@@ -201,7 +238,18 @@ class ThemeFrontendRenderingTest extends TestCase
         app(CoreSettingsManager::class)->put('active_theme_slug', 'slot-theme', group: 'themes');
         app(ThemeViewResolver::class)->registerActiveThemeNamespace();
 
-        $this->createBlogPluginRecord(ExtensionOperationalStatus::Enabled);
+        $record = $this->createBlogPluginRecord(ExtensionOperationalStatus::Enabled);
+        app(PluginMigrationService::class)->runPendingFor($record);
+
+        Post::query()->create([
+            'title' => 'Wrapped Story',
+            'slug' => 'wrapped-story',
+            'excerpt' => 'Wrapped recent post excerpt.',
+            'content' => 'Wrapped recent post content.',
+            'status' => 'published',
+            'published_at' => now(),
+        ]);
+
         app(PluginProviderBootstrapper::class)->bootstrap();
 
         $response = $this->get(route('home'));
@@ -210,6 +258,77 @@ class ThemeFrontendRenderingTest extends TestCase
         $response->assertSee('Slot Theme');
         $response->assertSee('Theme Slot Wrapper');
         $response->assertSee('Blog Plugin Slot');
+        $response->assertSee('Explorar Blog');
+    }
+
+    public function test_theme_can_override_the_block_view_for_a_rich_slot_contribution(): void
+    {
+        $themePath = $this->sandboxPath.DIRECTORY_SEPARATOR.'BlockOverrideTheme';
+        $viewsPath = $themePath.DIRECTORY_SEPARATOR.'views';
+        $pluginSlotPath = $viewsPath.DIRECTORY_SEPARATOR.'plugins'.DIRECTORY_SEPARATOR.'blog'.DIRECTORY_SEPARATOR.'slots';
+
+        $this->files->ensureDirectoryExists($pluginSlotPath);
+        $this->files->put(
+            $viewsPath.DIRECTORY_SEPARATOR.'home.blade.php',
+            '<html><body><h1>Block Override Theme</h1>{!! $sidebarSlot !!}</body></html>'
+        );
+        $this->files->put(
+            $pluginSlotPath.DIRECTORY_SEPARATOR.'recent-posts.blade.php',
+            '<section><strong>Theme Block Override</strong>@foreach ($posts as $post)<div>{{ $post->title }}</div>@endforeach</section>'
+        );
+
+        ExtensionRecord::query()->create([
+            'type' => ExtensionType::Theme,
+            'slug' => 'block-override-theme',
+            'name' => 'Block Override Theme',
+            'description' => 'Theme fixture.',
+            'author' => 'Tests',
+            'detected_version' => '0.1.0',
+            'path' => $themePath,
+            'manifest_path' => $themePath.DIRECTORY_SEPARATOR.'theme.json',
+            'discovery_status' => ExtensionDiscoveryStatus::Valid,
+            'lifecycle_status' => ExtensionLifecycleStatus::Installed,
+            'operational_status' => 'disabled',
+            'discovery_errors' => [],
+            'normalized_manifest' => [
+                'type' => 'theme',
+                'name' => 'Block Override Theme',
+                'slug' => 'block-override-theme',
+                'description' => 'Theme fixture.',
+                'version' => '0.1.0',
+                'author' => 'Tests',
+                'vendor' => null,
+                'core' => ['min' => '0.1.0'],
+                'critical' => false,
+                'requires' => [],
+                'capabilities' => [],
+            ],
+        ]);
+
+        app(CoreSettingsManager::class)->put('active_theme_slug', 'block-override-theme', group: 'themes');
+        app(ThemeViewResolver::class)->registerActiveThemeNamespace();
+
+        $record = $this->createBlogPluginRecord(ExtensionOperationalStatus::Enabled);
+        app(PluginMigrationService::class)->runPendingFor($record);
+
+        Post::query()->create([
+            'title' => 'Override Story',
+            'slug' => 'override-story',
+            'excerpt' => 'Override excerpt.',
+            'content' => 'Override content.',
+            'status' => 'published',
+            'published_at' => now(),
+        ]);
+
+        app(PluginProviderBootstrapper::class)->bootstrap();
+
+        $response = $this->get(route('home'));
+
+        $response->assertOk();
+        $response->assertSee('Block Override Theme');
+        $response->assertSee('Theme Block Override');
+        $response->assertSee('Override Story');
+        $response->assertDontSee('Browse all posts');
     }
 
     protected function createBlogPluginRecord(ExtensionOperationalStatus $operationalStatus): ExtensionRecord
@@ -237,6 +356,38 @@ class ThemeFrontendRenderingTest extends TestCase
                 'vendor' => null,
                 'core' => ['min' => '0.1.0'],
                 'provider' => 'Plugins\\Blog\\Providers\\BlogServiceProvider',
+                'critical' => false,
+                'requires' => [],
+                'capabilities' => ['admin_pages'],
+            ],
+        ]);
+    }
+
+    protected function createFormsPluginRecord(ExtensionOperationalStatus $operationalStatus): ExtensionRecord
+    {
+        return ExtensionRecord::query()->create([
+            'type' => ExtensionType::Plugin,
+            'slug' => 'forms',
+            'name' => 'Forms',
+            'description' => 'Official Forms plugin.',
+            'author' => 'Tests',
+            'detected_version' => '0.1.0',
+            'path' => base_path('plugins/Forms'),
+            'manifest_path' => base_path('plugins/Forms/plugin.json'),
+            'discovery_status' => ExtensionDiscoveryStatus::Valid,
+            'lifecycle_status' => ExtensionLifecycleStatus::Installed,
+            'operational_status' => $operationalStatus,
+            'discovery_errors' => [],
+            'normalized_manifest' => [
+                'type' => 'plugin',
+                'name' => 'Forms',
+                'slug' => 'forms',
+                'description' => 'Official Forms plugin.',
+                'version' => '0.1.0',
+                'author' => 'Tests',
+                'vendor' => null,
+                'core' => ['min' => '0.1.0'],
+                'provider' => 'Plugins\\Forms\\Providers\\FormsServiceProvider',
                 'critical' => false,
                 'requires' => [],
                 'capabilities' => ['admin_pages'],

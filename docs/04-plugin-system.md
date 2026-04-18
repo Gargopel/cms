@@ -68,6 +68,8 @@ O plugin oficial `Blog` usa o mesmo contrato para declarar:
 - migrations proprias compativeis com o runner operacional do core
 - evolucao editorial simples com categorias sem virar taxonomia generica
 - evolucao editorial simples com tags por pivot propria, sem virar taxonomia generica
+- busca administrativa simples por titulo/slug e filtros editoriais uteis sem virar search engine
+- busca publica leve no indice do blog limitada a posts publicados
 
 O plugin oficial `Seo` usa o mesmo contrato para declarar:
 
@@ -75,6 +77,7 @@ O plugin oficial `Seo` usa o mesmo contrato para declarar:
 - permissao para governar settings do plugin
 - catalogo pequeno de defaults globais de SEO
 - resolvedor simples de metadados consumido opcionalmente por outros plugins publicos
+- geracao simples de sitemap XML com resiliencia quando plugins de conteudo nao estiverem elegiveis
 
 O plugin oficial `Forms` usa o mesmo contrato para declarar:
 
@@ -85,6 +88,7 @@ O plugin oficial `Forms` usa o mesmo contrato para declarar:
 - migrations proprias compativeis com o runner operacional do core
 - modelagem explicita para formularios, campos, submissões e valores
 - renderizacao publica simples com fallback por tema
+- catalogo pequeno de settings persistidos do plugin para notificacao simples e comportamento pos-envio
 
 ## Settings de plugin nesta etapa
 

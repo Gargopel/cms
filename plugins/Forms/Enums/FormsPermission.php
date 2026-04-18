@@ -10,4 +10,5 @@ enum FormsPermission: string
     case PublishForms = 'forms.publish_forms';
     case DeleteForms = 'forms.delete_forms';
     case ViewFormSubmissions = 'forms.view_form_submissions';
+    case ManageSettings = 'forms.manage_settings';
 }

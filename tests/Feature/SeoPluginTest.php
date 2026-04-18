@@ -21,7 +21,9 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use Plugins\Blog\Models\Category;
 use Plugins\Blog\Models\Post;
+use Plugins\Blog\Models\Tag;
 use Plugins\Pages\Models\Page;
 use Plugins\Seo\Contracts\SeoMetadataResolver;
 use Tests\TestCase;
@@ -232,6 +234,99 @@ BLADE
             ->assertSee('<title>Theme Seo Page | Search Layer</title>', false)
             ->assertSee('<meta name="description" content="Theme aware page content.">', false)
             ->assertSee('Theme SEO Override Theme Seo Page');
+    }
+
+    public function test_it_generates_a_public_sitemap_with_expected_public_content(): void
+    {
+        $category = Category::query()->create([
+            'name' => 'Guides',
+            'slug' => 'guides',
+            'description' => 'Guides and public editorial content.',
+        ]);
+
+        $tag = Tag::query()->create([
+            'name' => 'Launch',
+            'slug' => 'launch',
+            'description' => 'Launch oriented content.',
+        ]);
+
+        Page::query()->create([
+            'title' => 'Public Page',
+            'slug' => 'public-page',
+            'content' => 'Published page in sitemap.',
+            'status' => 'published',
+        ]);
+
+        Page::query()->create([
+            'title' => 'Draft Page',
+            'slug' => 'draft-page',
+            'content' => 'Draft page should stay out.',
+            'status' => 'draft',
+        ]);
+
+        $publishedPost = Post::query()->create([
+            'title' => 'Published Post',
+            'slug' => 'published-post',
+            'excerpt' => 'Published excerpt.',
+            'content' => 'Published content.',
+            'status' => 'published',
+            'published_at' => now(),
+            'category_id' => $category->getKey(),
+        ]);
+        $publishedPost->tags()->sync([$tag->getKey()]);
+
+        $draftPost = Post::query()->create([
+            'title' => 'Draft Post',
+            'slug' => 'draft-post',
+            'excerpt' => 'Draft excerpt.',
+            'content' => 'Draft content.',
+            'status' => 'draft',
+            'published_at' => null,
+        ]);
+        $draftPost->tags()->sync([$tag->getKey()]);
+
+        $response = $this->get('/sitemap.xml');
+
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'application/xml; charset=UTF-8');
+        $response->assertSee('<?xml version="1.0" encoding="UTF-8"?>', false);
+        $response->assertSee('<loc>'.url('/').'</loc>', false);
+        $response->assertSee('<loc>'.url('/pages/public-page').'</loc>', false);
+        $response->assertSee('<loc>'.url('/blog').'</loc>', false);
+        $response->assertSee('<loc>'.url('/blog/published-post').'</loc>', false);
+        $response->assertSee('<loc>'.url('/blog/category/guides').'</loc>', false);
+        $response->assertSee('<loc>'.url('/blog/tag/launch').'</loc>', false);
+        $response->assertDontSee(url('/pages/draft-page'), false);
+        $response->assertDontSee(url('/blog/draft-post'), false);
+    }
+
+    public function test_sitemap_omits_content_from_plugins_that_are_not_publicly_eligible(): void
+    {
+        Page::query()->create([
+            'title' => 'Public Page',
+            'slug' => 'public-page',
+            'content' => 'Published page in sitemap.',
+            'status' => 'published',
+        ]);
+
+        Post::query()->create([
+            'title' => 'Published Post',
+            'slug' => 'published-post',
+            'excerpt' => 'Published excerpt.',
+            'content' => 'Published content.',
+            'status' => 'published',
+            'published_at' => now(),
+        ]);
+
+        app(ExtensionOperationalStateManager::class)->disable(ExtensionType::Plugin, 'pages');
+        app(ExtensionOperationalStateManager::class)->disable(ExtensionType::Plugin, 'blog');
+
+        $this->get('/sitemap.xml')
+            ->assertOk()
+            ->assertSee('<loc>'.url('/').'</loc>', false)
+            ->assertDontSee(url('/pages/public-page'), false)
+            ->assertDontSee(url('/blog'), false)
+            ->assertDontSee(url('/blog/published-post'), false);
     }
 
     protected function bootPlugins(array $slugs): void

@@ -9,16 +9,20 @@ Plugin oficial editorial do ecossistema, criado como segunda referencia real de 
 - settings persistidos do plugin declarados no manifesto e geridos pelo core
 - migrations proprias em `database/migrations`
 - area administrativa em Blade para listar, criar, editar e remover posts
+- busca simples no admin por titulo e slug
+- filtros administrativos simples por status e categoria
 - area administrativa em Blade para listar, criar e editar categorias editoriais
 - area administrativa em Blade para listar, criar e editar tags editoriais
 - status editoriais minimos `draft` e `published`
 - rota publica para listagem de posts publicados
+- busca publica simples no indice do blog por titulo, slug e excerpt
 - rota publica para visualizar post publicado por slug
 - rota publica para listagem de posts publicados por categoria
 - rota publica para listagem de posts publicados por tag
 - integracao com tema ativo por override opcional de views
 - hooks reais para menu admin e painel simples de dashboard
 - contribuicao simples para slot de tema `footer_cta` na home publica
+- contribuicao rica de posts recentes no slot `sidebar` da home publica
 
 ## Estrutura
 
@@ -138,6 +142,23 @@ Uso real atual:
 - sem SEO avancado
 - sem revisao/versionamento
 - sem editor rico complexo
+- sem busca full text complexa
+
+## Busca e filtros nesta etapa
+
+Admin:
+
+- busca simples por titulo e slug
+- filtro por status `draft` ou `published`
+- filtro por categoria principal
+- ordenacao priorizando posts publicados mais recentes e, em seguida, atualizados recentemente
+
+Frontend:
+
+- busca simples no indice `/blog?q=termo`
+- pesquisa apenas em posts `published`
+- campos considerados nesta fase: `title`, `slug` e `excerpt`
+- drafts nunca aparecem nos resultados publicos
 
 ## Renderizacao publica
 
@@ -161,6 +182,10 @@ O plugin agora tambem publica um bloco simples para o slot:
 
 - `footer_cta`
 
+E um bloco mais rico para:
+
+- `sidebar`
+
 Objetivo:
 
 - demonstrar como um plugin oficial pode contribuir com o frontend sem virar page builder
@@ -170,12 +195,15 @@ Objetivo:
 View publicada pelo plugin:
 
 - `blog::slots.footer-cta`
+- `blog::slots.recent-posts`
 
 Comportamento:
 
 - o bloco so entra no registro quando o plugin estiver `valid`, `installed` e `enabled`
 - se o tema ativo declarar `views/slots/footer_cta.blade.php`, ele decide o wrapper final
 - se o tema nao declarar esse slot explicitamente, o core usa o fallback `front.slots.default`
+- o bloco de posts recentes resolve dados no backend e nunca faz query diretamente na Blade
+- quando o tema declarar `views/plugins/blog/slots/recent-posts.blade.php`, ele pode sobrescrever a view do bloco sem quebrar o contrato do slot
 
 ## Migrations
 

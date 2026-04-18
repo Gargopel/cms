@@ -9,6 +9,7 @@ Plugin oficial enxuto para resolver metadados SEO no frontend sem acoplar essa r
 - resolvedor simples de metadados SEO com fallback previsivel
 - renderizacao de title, description, canonical, robots e Open Graph basico
 - integracao leve com `Pages` e `Blog`
+- sitemap XML publico simples em `/sitemap.xml`
 
 ## Permissoes declaradas
 
@@ -29,6 +30,11 @@ O plugin publica o contrato:
 E retorna um DTO simples:
 
 - `Plugins\Seo\Support\SeoMetadata`
+- `Plugins\Seo\Support\SitemapUrl`
+
+Tambem expõe um gerador pequeno e previsivel para sitemap:
+
+- `Plugins\Seo\Support\SeoSitemapGenerator`
 
 O contexto aceito nesta fase e pequeno e explicito, com chaves como:
 
@@ -44,9 +50,30 @@ O contexto aceito nesta fase e pequeno e explicito, com chaves como:
 - `Pages`: paginas publicas usam defaults globais do plugin e featured image quando existir
 - `Blog`: listagem publica, post publico, listagem por categoria e listagem por tag usam defaults globais do plugin e metadados especificos de conteudo quando houver
 
+## Sitemap XML nesta etapa
+
+O plugin publica uma rota simples:
+
+- `GET /sitemap.xml`
+
+Entradas consideradas nesta fase:
+
+- home publica
+- paginas `published` do plugin `Pages`, quando `Pages` estiver `valid + installed + enabled`
+- indice publico `/blog`
+- posts `published` do plugin `Blog`, quando `Blog` estiver `valid + installed + enabled`
+- paginas publicas de categoria do `Blog` que possuam ao menos um post publicado
+- paginas publicas de tag do `Blog` que possuam ao menos um post publicado
+
+Regras atuais:
+
+- conteudos `draft` nao entram
+- se `Pages` ou `Blog` nao estiverem elegiveis, o sitemap simplesmente omite suas URLs
+- nao existe sitemap index, image sitemap, news sitemap ou configuracao editorial avancada
+- a geracao permanece no plugin `Seo`, sem mover SEO para o core
+
 ## Limites desta fase
 
-- sem sitemap
 - sem schema avancado
 - sem analise de SEO
 - sem redirecionamentos
